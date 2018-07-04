@@ -1,0 +1,189 @@
+// ACES Sample DCTL
+
+#include "ACES_LIB/ACES_IDT.h"
+#include "ACES_LIB/ACES_LMT.h"
+#include "ACES_LIB/ACES_RRT.h"
+#include "ACES_LIB/ACES_ODT.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+//aces = ACEScc_to_ACES(aces);
+//aces = ACEScct_to_ACES(aces);
+//aces = ADX10_to_ACES(aces);
+//aces = ADX16_to_ACES(aces);
+
+//aces = IDT_Alexa_v3_logC_EI800(aces);
+//aces = IDT_Alexa_v3_raw_EI800_CCT6500(aces);
+//aces = IDT_Panasonic_V35(aces);
+//aces = IDT_REDWideGamutRGB_Log3G10(aces);
+//aces = IDT_Canon_C100_A_D55(aces);
+//aces = IDT_Canon_C100_A_Tng(aces);
+//aces = IDT_Canon_C100mk2_A_D55(aces);
+//aces = IDT_Canon_C100mk2_A_Tng(aces);
+//aces = IDT_Canon_C300_A_D55(aces);
+//aces = IDT_Canon_C300_A_Tng(aces);
+//aces = IDT_Canon_C500_A_D55(aces);
+//aces = IDT_Canon_C500_A_Tng(aces);
+//aces = IDT_Canon_C500_B_D55(aces);
+//aces = IDT_Canon_C500_B_Tng(aces);
+//aces = IDT_Canon_C500_CinemaGamut_A_D55(aces);
+//aces = IDT_Canon_C500_CinemaGamut_A_Tng(aces);
+//aces = IDT_Canon_C500_DCI_P3_A_D55(aces);
+//aces = IDT_Canon_C500_DCI_P3_A_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog_BT2020_D_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog_BT2020_D_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog2_BT2020_B_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog2_BT2020_B_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog3_BT2020_F_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog3_BT2020_F_Tng(aces);
+//aces = IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_D55(aces);
+//aces = IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_Tng(aces);
+//aces = IDT_Sony_SLog1_SGamut_10(aces);
+//aces = IDT_Sony_SLog1_SGamut_12(aces);
+//aces = IDT_Sony_SLog2_SGamut_Daylight_10(aces);
+//aces = IDT_Sony_SLog2_SGamut_Daylight_12(aces);
+//aces = IDT_Sony_SLog2_SGamut_Tungsten_10(aces);
+//aces = IDT_Sony_SLog2_SGamut_Tungsten_12(aces);
+//aces = IDT_Sony_SLog3_SGamut3(aces);
+//aces = IDT_Sony_SLog3_SGamut3Cine(aces);
+
+//aces = ACES_to_ACEScc(aces);
+//aces = ACES_to_ACEScct(aces);
+//aces = ACES_to_ACEScg(aces);
+//aces = ACES_to_ACESproxy10(aces);
+//aces = ACES_to_ACESproxy12(aces);
+
+//aces = LMT_Analytic_1a(aces);
+//aces = LMT_Analytic_1b(aces);
+//aces = LMT_Analytic_1c(aces);
+//aces = LMT_Analytic_2(aces);
+//aces = LMT_Analytic_3(aces);
+//aces = LMT_Analytic_4(aces);
+//aces = LMT_BlueLightArtifactFix(aces);
+
+// Custom LMT
+/*
+
+aces = scale_C( aces, 1.0f);
+
+float3 SLOPE = make_float3(1.0f, 1.0f, 1.0f);
+float3 OFFSET = make_float3(0.0f, 0.0f, 0.0f);
+float3 POWER = make_float3(1.0f, 1.0f, 1.0f);
+
+aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER);
+
+aces = gamma_adjust_linear( aces, 1.0f, 0.18f);
+aces = rotate_H_in_H( aces, 30.0f, 60.0f, 0.0f);
+aces = rotate_H_in_H( aces, 180.0f, 60.0f, 0.0f);
+aces = rotate_H_in_H( aces, 120.0f, 60.0f, 0.0f);
+aces = scale_C_at_H( aces, 30.0f, 60.0f, 1.0f);
+aces = rotate_H_in_H( aces, 0.0f, 60.0f, 0.0f);
+aces = scale_C_at_H( aces, 180.0f, 60.0f, 1.0f);
+
+*/
+
+//aces = ACEScc_to_ACES(aces);
+//aces = ACEScct_to_ACES(aces);
+//aces = ACEScg_to_ACES(aces);
+//aces = ACESproxy10_to_ACES(aces);
+//aces = ACESproxy12_to_ACES(aces);
+
+//aces = RRT(aces);
+//aces = InvRRT(aces);
+
+//aces = ACES_to_ACEScc(aces);
+//aces = ACES_to_ACEScct(aces);
+//aces = ODT_Rec709_100nits_dim(aces);
+//aces = ODT_Rec709_D60sim_100nits_dim(aces);
+//aces = ODT_Rec2020_100nits_dim(aces);
+//aces = ODT_Rec2020_ST2084_1000nits(aces);
+//aces = ODT_Rec2020_Rec709limited_100nits_dim(aces);
+//aces = ODT_Rec2020_P3D65limited_100nits_dim(aces);
+//aces = ODT_sRGB_100nits_dim(aces);
+//aces = ODT_sRGB_D60sim_100nits_dim(aces);
+//aces = ODT_P3DCI_48nits(aces);
+//aces = ODT_P3DCI_D60sim_48nits(aces);
+//aces = ODT_P3DCI_D65sim_48nits(aces);
+//aces = ODT_P3D60_48nits(aces);
+//aces = ODT_P3D65_48nits(aces);
+//aces = ODT_P3D65_D60sim_48nits(aces);
+//aces = ODT_P3D65_Rec709limited_48nits(aces);
+//aces = ODT_DCDM(aces);
+//aces = ODT_DCDM_P3D60limited(aces);
+//aces = ODT_DCDM_P3D65limited(aces);
+//aces = ODT_RGBmonitor_100nits_dim(aces);
+//aces = ODT_RGBmonitor_D60sim_100nits_dim(aces);
+
+//aces = InvODT_Rec709_100nits_dim(aces);
+//aces = InvODT_Rec709_D60sim_100nits_dim(aces);
+//aces = InvODT_Rec2020_100nits_dim(aces);
+//aces = InvODT_Rec2020_ST2084_1000nits(aces);
+//aces = InvODT_sRGB_100nits_dim(aces);
+//aces = InvODT_sRGB_D60sim_100nits_dim(aces);
+//aces = InvODT_P3DCI_48nits(aces);
+//aces = InvODT_P3DCI_D60sim_48nits(aces);
+//aces = InvODT_P3DCI_D65sim_48nits(aces);
+//aces = InvODT_P3D60_48nits(aces);
+//aces = InvODT_P3D65_48nits(aces);
+//aces = InvODT_P3D65_D60sim_48nits(aces);
+//aces = InvODT_DCDM(aces);
+//aces = InvODT_DCDM_P3D65limited(aces);
+//aces = InvODT_RGBmonitor_100nits_dim(aces);
+//aces = InvODT_RGBmonitor_D60sim_100nits_dim(aces);
+
+// Custom Output Transform
+/*
+
+float Y_MIN = 0.0001f;
+float Y_MID = 15.0f;
+float Y_MAX = 1000.0f;
+
+Chromaticities DISPLAY_PRI = REC2020_PRI;
+Chromaticities LIMITING_PRI = REC2020_PRI;
+
+int EOTF = 2;		// 0: ST-2084 (PQ)
+			// 1: BT.1886 (Rec.709/2020 settings) 
+			// 2: sRGB (mon_curve w/ presets)
+			// 3: gamma 2.6
+			// 4: linear (no EOTF)
+			// 5: HLG
+				
+int SURROUND = 0;	// 0: dark
+			// 1: dim
+			// 2: normal
+					           
+bool STRETCH_BLACK = true;
+bool D60_SIM = false;                       
+bool LEGAL_RANGE = false;
+
+aces = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
+
+//aces = invOutputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
+
+*/
+
+//aces = RRTODT_P3D65_108nits_7_2nits_ST2084(aces);
+//aces = RRTODT_Rec2020_1000nits_15nits_HLG(aces);
+//aces = RRTODT_Rec2020_1000nits_15nits_ST2084(aces);
+//aces = RRTODT_Rec2020_2000nits_15nits_ST2084(aces);
+//aces = RRTODT_Rec2020_4000nits_15nits_ST2084(aces);
+//aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);
+//aces = RRTODT_Rec709_100nits_10nits_sRGB(aces);
+
+//aces = InvRRTODT_P3D65_108nits_7_2nits_ST2084(aces);
+//aces = InvRRTODT_Rec2020_1000nits_15nits_HLG(aces);
+//aces = InvRRTODT_Rec2020_1000nits_15nits_ST2084(aces);
+//aces = InvRRTODT_Rec2020_2000nits_15nits_ST2084(aces);
+//aces = InvRRTODT_Rec2020_4000nits_15nits_ST2084(aces);
+//aces = InvRRTODT_Rec709_100nits_10nits_BT1886(aces);
+//aces = InvRRTODT_Rec709_100nits_10nits_sRGB(aces);
+
+return aces;
+
+}
