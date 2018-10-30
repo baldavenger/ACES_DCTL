@@ -47,7 +47,7 @@ __DEVICE__ inline float lookup_ACESmin( float minLum )
     float2 minTable[2] = { { _log10f(MIN_LUM_RRT), MIN_STOP_RRT }, 
                                    { _log10f(MIN_LUM_SDR), MIN_STOP_SDR } };
 
-    return 0.18f * _powf( 2.0f, interpolate1D( minTable, _log10f( minLum)));
+    return 0.18f * _powf( 2.0f, interpolate1D( minTable, 2, _log10f( minLum)));
 }
 
 __DEVICE__ inline float lookup_ACESmax( float maxLum )
@@ -55,7 +55,7 @@ __DEVICE__ inline float lookup_ACESmax( float maxLum )
     float2 maxTable[2] = { { _log10f(MAX_LUM_SDR), MAX_STOP_SDR }, 
                                    { _log10f(MAX_LUM_RRT), MAX_STOP_RRT } };
 
-    return 0.18f * _powf( 2.0f, interpolate1D( maxTable, _log10f( maxLum)));
+    return 0.18f * _powf( 2.0f, interpolate1D( maxTable, 2, _log10f( maxLum)));
 }
 
 __DEVICE__ inline float5 init_coefsLow(
@@ -83,7 +83,7 @@ __DEVICE__ inline float5 init_coefsLow(
     // Middle coefficient (which defines the "sharpness of the bend") is linearly interpolated
     float2 bendsLow[2] = { {MIN_STOP_RRT, 0.18f}, 
                     {MIN_STOP_SDR, 0.35f} };
-    float pctLow = interpolate1D( bendsLow, log2(TsPointLow.x / 0.18f));
+    float pctLow = interpolate1D( bendsLow, 2, log2(TsPointLow.x / 0.18f));
     coefsLow.z = _log10f(TsPointLow.y) + pctLow*(_log10f(TsPointMid.y)-_log10f(TsPointLow.y));
 
     return coefsLow;
@@ -114,7 +114,7 @@ __DEVICE__ inline float5 init_coefsHigh(
     // Middle coefficient (which defines the "sharpness of the bend") is linearly interpolated
     float2 bendsHigh[2] = { {MAX_STOP_SDR, 0.89f}, 
                     	{MAX_STOP_RRT, 0.90f} };
-    float pctHigh = interpolate1D( bendsHigh, log2(TsPointMax.x / 0.18f));
+    float pctHigh = interpolate1D( bendsHigh, 2, log2(TsPointMax.x / 0.18f));
     coefsHigh.z = _log10f(TsPointMid.y) + pctHigh*(_log10f(TsPointMax.y)-_log10f(TsPointMid.y));
     
     return coefsHigh;

@@ -350,9 +350,9 @@ __DEVICE__ inline float lookupCubic1D (float table[], float pMin, float pMax, fl
   return table[i] * (2 * s*s*s - 3 * s*s + 1) + m0 * (s*s*s - 2 * s*s + s) + table[i+1] * (-2 * s*s*s + 3 * s*s) + m1 * (s*s*s - s*s);
 }
 
-__DEVICE__ inline float interpolate1D (float2 table[], float p)
+__DEVICE__ inline float interpolate1D (float2 table[], int Size, float p)
 {
-  int Size = size(table);
+  //int Size = size(table);
   if( p <= table[0].x ) return table[0].y;
   if( p >= table[Size-1].x ) return table[Size-1].y;
   
@@ -1149,7 +1149,7 @@ __DEVICE__ inline float CanonLog3_to_linear ( float clog3)
 	return out;
 }
 
-__DEVICE__ inline float Log3G10_to_linear ( float log3g10)
+__DEVICE__ inline float Log3G10_to_linear_2016 ( float log3g10)
 {
 	float a, b, c, mirror, linear;
 	a = 0.224282f;
@@ -1163,6 +1163,19 @@ __DEVICE__ inline float Log3G10_to_linear ( float log3g10)
 	}
 	linear = (_powf(10.0f, log3g10 / a) - 1.0f) / b;
 	linear = linear * mirror - c;
+	return linear;
+}
+
+__DEVICE__ inline float Log3G10_to_linear ( float log3g10)
+{
+	float a, b, c, g, linear;
+	a = 0.224282f;
+	b = 155.975327f;
+	c = 0.01f;
+	g = 15.1927f;
+	
+	linear = log3g10 < 0.0f ? (log3g10 / g) : (_powf(10.0f, log3g10 / a) - 1.0f) / b;
+	linear = linear - c;
 	return linear;
 }
 

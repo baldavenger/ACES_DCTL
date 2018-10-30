@@ -524,11 +524,10 @@ __CONSTANT__ float2 LUT1D[1024] = {
 
 __DEVICE__ inline float3 LMT_Analytic_2( float3 In)
 {
-    // Apply 1D-LUT
     float3 out;
-    out.x = _pow10f( interpolate1D( LUT1D, _log10f(In.x) ) );
-    out.y = _pow10f( interpolate1D( LUT1D, _log10f(In.y) ) );
-    out.z = _pow10f( interpolate1D( LUT1D, _log10f(In.z) ) );
+    out.x = _pow10f( interpolate1D( LUT1D, 1024, _log10f(In.x) ) );
+    out.y = _pow10f( interpolate1D( LUT1D, 1024, _log10f(In.y) ) );
+    out.z = _pow10f( interpolate1D( LUT1D, 1024, _log10f(In.z) ) );
     
     return out;
 }
