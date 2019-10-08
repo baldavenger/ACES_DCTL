@@ -1,9 +1,6 @@
-// ACES Sample DCTL
+// ACES 1.1 DCTL
 
-#include "ACES_LIB/ACES_IDT.h"
-#include "ACES_LIB/ACES_LMT.h"
-#include "ACES_LIB/ACES_RRT.h"
-#include "ACES_LIB/ACES_ODT.h"
+#include "ACES_LIB.h"
 
 __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
 {
@@ -11,8 +8,11 @@ float3 aces = make_float3(p_R, p_G, p_B);
 
 //aces = ACEScc_to_ACES(aces);
 //aces = ACEScct_to_ACES(aces);
+//aces = ACEScg_to_ACES(aces);
 //aces = ADX10_to_ACES(aces);
 //aces = ADX16_to_ACES(aces);
+//aces = ACESproxy10_to_ACES(aces);
+//aces = ACESproxy12_to_ACES(aces);
 
 //aces = IDT_Alexa_v3_logC_EI800(aces);
 //aces = IDT_Alexa_v3_raw_EI800_CCT6500(aces);
@@ -59,25 +59,18 @@ float3 aces = make_float3(p_R, p_G, p_B);
 //aces = ACES_to_ACESproxy10(aces);
 //aces = ACES_to_ACESproxy12(aces);
 
-//aces = LMT_Analytic_1a(aces);
-//aces = LMT_Analytic_1b(aces);
-//aces = LMT_Analytic_1c(aces);
-//aces = LMT_Analytic_2(aces);
-//aces = LMT_Analytic_3(aces);
-//aces = LMT_Analytic_4(aces);
+//aces = LMT_PFE(aces);
+//aces = LMT_Bleach(aces);
 //aces = LMT_BlueLightArtifactFix(aces);
 
 // Custom LMT
 /*
-
 aces = scale_C( aces, 1.0f);
-
 float3 SLOPE = make_float3(1.0f, 1.0f, 1.0f);
 float3 OFFSET = make_float3(0.0f, 0.0f, 0.0f);
 float3 POWER = make_float3(1.0f, 1.0f, 1.0f);
-
-aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER);
-
+float SAT = 1.0f;
+aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER, SAT);
 aces = gamma_adjust_linear( aces, 1.0f, 0.18f);
 aces = rotate_H_in_H( aces, 30.0f, 60.0f, 0.0f);
 aces = rotate_H_in_H( aces, 180.0f, 60.0f, 0.0f);
@@ -85,14 +78,11 @@ aces = rotate_H_in_H( aces, 120.0f, 60.0f, 0.0f);
 aces = scale_C_at_H( aces, 30.0f, 60.0f, 1.0f);
 aces = rotate_H_in_H( aces, 0.0f, 60.0f, 0.0f);
 aces = scale_C_at_H( aces, 180.0f, 60.0f, 1.0f);
-
 */
 
 //aces = ACEScc_to_ACES(aces);
 //aces = ACEScct_to_ACES(aces);
 //aces = ACEScg_to_ACES(aces);
-//aces = ACESproxy10_to_ACES(aces);
-//aces = ACESproxy12_to_ACES(aces);
 
 //aces = RRT(aces);
 //aces = InvRRT(aces);
@@ -139,33 +129,18 @@ aces = scale_C_at_H( aces, 180.0f, 60.0f, 1.0f);
 
 // Custom Output Transform
 /*
-
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
-
 Chromaticities DISPLAY_PRI = REC2020_PRI;
 Chromaticities LIMITING_PRI = REC2020_PRI;
-
-int EOTF = 2;		// 0: ST-2084 (PQ)
-			// 1: BT.1886 (Rec.709/2020 settings) 
-			// 2: sRGB (mon_curve w/ presets)
-			// 3: gamma 2.6
-			// 4: linear (no EOTF)
-			// 5: HLG
-				
-int SURROUND = 0;	// 0: dark
-			// 1: dim
-			// 2: normal
-					           
+int EOTF = 2; // 0: ST-2084 (PQ), 1: BT.1886 (Rec.709/2020 settings), 2: sRGB (mon_curve w/ presets), 3: gamma 2.6, 4: linear (no EOTF), 5: HLG
+int SURROUND = 0; // 0: dark, 1: dim, 2: normal
 bool STRETCH_BLACK = true;
 bool D60_SIM = false;                       
 bool LEGAL_RANGE = false;
-
 aces = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
-
 //aces = invOutputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
-
 */
 
 //aces = RRTODT_P3D65_108nits_7_2nits_ST2084(aces);
@@ -185,5 +160,4 @@ aces = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI, LIMITING_PRI, EO
 //aces = InvRRTODT_Rec709_100nits_10nits_sRGB(aces);
 
 return aces;
-
 }

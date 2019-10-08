@@ -10,19 +10,17 @@ DEFINE_UI_PARAMS(offset, Offset, DCTLUI_SLIDER_FLOAT, 0, -1, 1, 0.001)
 DEFINE_UI_PARAMS(softClip, Sat Softclip, DCTLUI_SLIDER_FLOAT, 0, 0, 1, 0.001)
 DEFINE_UI_PARAMS(PFE, Enable PFE, DCTLUI_CHECK_BOX, 1)
 
-#include "ACES_LIB/ACES_IDT.h"
-#include "ACES_LIB/ACES_LMT.h"
+#include "ACES_LIB.h"
 
-__CONSTANT__ float e = 2.718281828459045f;
 __CONSTANT__ float AP0_Rec709[9] = {2.52161f, -1.13407f, -0.387538f, -0.276482f, 1.37272f, -0.0962352f, -0.0153831f, -0.152991f, 1.16837f};
 
 __DEVICE__ float3 Sigmoid( float3 In, float peak, float curve, float pivot, float offset)
 {
 float3 out;
-pivot = 0.435f - pivot/10;
-out.x = peak / (1.0f + _powf(e, (-8.9f * curve) * (In.x - pivot))) + offset;
-out.y = peak / (1.0f + _powf(e, (-8.9f * curve) * (In.y - pivot))) + offset;
-out.z = peak / (1.0f + _powf(e, (-8.9f * curve) * (In.z - pivot))) + offset;
+pivot = 0.435f - pivot/10.0f;
+out.x = peak / (1.0f + _expf(-8.9f * curve * (In.x - pivot))) + offset;
+out.y = peak / (1.0f + _expf(-8.9f * curve * (In.y - pivot))) + offset;
+out.z = peak / (1.0f + _expf(-8.9f * curve * (In.z - pivot))) + offset;
 return out;
 }
 
@@ -77,9 +75,9 @@ RGB.z = linLogc(RGB.z);
 
 RGB = Sigmoid( RGB, peak, curve, pivot, offset);
 
-if (softClip > 0){
+if (softClip > 0.0f){
 RGB = rgb_2_ych(RGB);
-RGB.y = Sat_Soft_Clip( RGB.y, 1 - softClip);
+RGB.y = Sat_Soft_Clip( RGB.y, 1.0f - softClip);
 RGB = ych_2_rgb(RGB);
 }
 

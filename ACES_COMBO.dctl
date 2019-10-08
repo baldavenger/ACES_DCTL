@@ -1,0 +1,121 @@
+// ACES 1.1 OFX DCTL
+
+DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -6, 6, 0.001)
+DEFINE_UI_PARAMS(IDT, IDT, DCTLUI_COMBO_BOX, 0, { IDT_OFF, ACESCCIN, ACESCCTIN, REC709IN, SRGBIN, ARRI, RED, PANAV35, SLOG1SGAMUT, SLOG2SGAMUT_DAY, SLOG2SGAMUT_TNG, SLOG3SGAMUT3, SLOG3SGAMUT3CINE }, { off, acescc, acescct, rec709, srgb, arri, red, panav35, slog1 sgamut, slog2 sgamut daylight, slog2 sgamut tungsten, slog3 sgamut3, slog3 sgamut3cine})
+DEFINE_UI_PARAMS(LMT, LMT, DCTLUI_COMBO_BOX, 0, { LMT_OFF, PFE, BLEACH, BLUEFIX }, { off, pfe, bleach, blue fix })
+DEFINE_UI_PARAMS(p_RRT, RRT, DCTLUI_COMBO_BOX, 0, { RRT_OFF, RRT_on }, { off, rrt })
+DEFINE_UI_PARAMS(ODT, ODT, DCTLUI_COMBO_BOX, 0, { ODT_OFF, ACESCCOUT, ACESCCTOUT, REC709, REC709D60, SRGB, SRGBD60, REC2020100, REC2020100_REC709LIM, REC2020ST20841000, P3DCI48, RRTODT_REC709, RRTODT_SRGB, RRTODT_REC20201000ST2084 }, { off, acescc, acescct, rec709, rec709 d60sim, srgb, srgb60, rec2020 100nits, rec2020 100nits rec709 limited, rec2020 st2084 1000nits, p3dci 48nits, rrtodt rec709, rrtodt srgb, rrtodt rec2020 st2084 1000nits })
+
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+switch (IDT){
+case 0:
+{}
+break;
+case ACESCCIN:
+{aces = ACEScc_to_ACES(aces);}
+break;
+case ACESCCTIN:
+{aces = ACEScct_to_ACES(aces);}
+break;
+case REC709IN:
+{aces = IDT_rec709(aces);}
+break;
+case SRGBIN:
+{aces = IDT_sRGB(aces);}
+break;
+case ARRI:
+{aces = IDT_Alexa_v3_logC_EI800(aces);}
+break;
+case RED:
+{aces = IDT_REDWideGamutRGB_Log3G10(aces);}
+break;
+case PANAV35:
+{aces = IDT_Panasonic_V35(aces);}
+break;
+case SLOG1SGAMUT:
+{aces = IDT_Sony_SLog1_SGamut_10(aces);}
+break;
+case SLOG2SGAMUT_DAY:
+{aces = IDT_Sony_SLog2_SGamut_Daylight_10(aces);}
+break;
+case SLOG2SGAMUT_TNG:
+{aces = IDT_Sony_SLog2_SGamut_Tungsten_10(aces);}
+break;
+case SLOG3SGAMUT3:
+{aces = IDT_Sony_SLog3_SGamut3(aces);}
+break;
+case SLOG3SGAMUT3CINE:
+{aces = IDT_Sony_SLog3_SGamut3Cine(aces);}}
+
+if(Exposure != 0.0f){ 
+aces.x *= _powf(2.0f, Exposure); 
+aces.y *= _powf(2.0f, Exposure); 
+aces.z *= _powf(2.0f, Exposure); 
+} 
+
+switch (LMT){
+case 0:
+{}
+break;
+case PFE:
+{aces = LMT_PFE(aces);}
+break;
+case BLEACH:
+{aces = LMT_Bleach(aces);}
+break;
+case BLUEFIX:
+{aces = LMT_BlueLightArtifactFix(aces);}}
+
+if(p_RRT == 1 && ODT != RRTODT_REC709 && ODT != RRTODT_SRGB && ODT != RRTODT_REC20201000ST2084 )
+aces = RRT(aces);
+
+switch (ODT){
+case 0:
+{}
+break;
+case ACESCCOUT:
+{aces = ACES_to_ACEScc(aces);}
+break;
+case ACESCCTOUT:
+{aces = ACES_to_ACEScct(aces);}
+break;
+case REC709:
+{aces = ODT_Rec709_100nits_dim(aces);}
+break;
+case REC709D60:
+{aces = ODT_Rec709_D60sim_100nits_dim(aces);}
+break;
+case SRGB:
+{aces = ODT_sRGB_100nits_dim(aces);}
+break;
+case SRGBD60:
+{aces = ODT_sRGB_D60sim_100nits_dim(aces);}
+break;
+case REC2020100:
+{aces = ODT_Rec2020_100nits_dim(aces);}
+break;
+case REC2020100_REC709LIM:
+{aces = ODT_Rec2020_Rec709limited_100nits_dim(aces);}
+break;
+case REC2020ST20841000:
+{aces = ODT_Rec2020_ST2084_1000nits(aces);}
+break;
+case P3DCI48:
+{aces = ODT_P3DCI_48nits(aces);}
+break;
+case RRTODT_REC709:
+{aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);}
+break;
+case RRTODT_SRGB:
+{aces = RRTODT_Rec709_100nits_10nits_sRGB(aces);}
+break;
+case RRTODT_REC20201000ST2084:
+{aces = RRTODT_Rec2020_1000nits_15nits_ST2084(aces);}}
+
+return aces;
+}
