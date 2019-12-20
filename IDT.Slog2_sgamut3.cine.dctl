@@ -1,0 +1,53 @@
+// IDT Slog2 SGamut3.Cine
+
+typedef struct
+{
+float3 c0, c1, c2;
+} mat3;
+
+__DEVICE__ float3 mult_f3_f33( float3 X, mat3 A) {
+float r[3];
+float x[3] = {X.x, X.y, X.z};
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+for( int i = 0; i < 3; ++i){
+r[i] = 0.0f;
+for( int j = 0; j < 3; ++j){
+r[i] = r[i] + x[j] * a[j][i];}}
+return make_float3(r[0], r[1], r[2]);
+}
+
+__DEVICE__ float SLog2_to_lin( float SLog, float b, float ab, float w) {
+float lin = 0.0f;
+if (SLog >= ab)
+lin = ( 219.0f * ( _exp10f( (( SLog - b) / ( w - b) - 0.616596f - 0.03f) / 0.432699f) - 0.037584f) / 155.0f) * 0.9f;
+else if (SLog < ab)
+lin = ( ( ( SLog - b) / ( w - b) - 0.030001222851889303f) / 3.53881278538813f) * 0.9f;
+return lin;
+}
+
+__DEVICE__ float3 IDT_Sony_SLog2_SGamut3Cine( float3 SLog2) {
+mat3 matrixCoef = { {0.6387886672f, -0.0039159060f, -0.0299072021f}, {0.2723514337f, 1.0880732309f, -0.0264325799f}, {0.0888598991f, -0.0841573249f, 1.0563397820f} };
+
+float B = 64.0f;
+float AB = 90.0f;
+float W = 940.0f;
+float3 SLog;
+SLog.x = SLog2.x * 1023.0f;
+SLog.y = SLog2.y * 1023.0f;
+SLog.z = SLog2.z * 1023.0f;
+float3 linear;
+linear.x = SLog2_to_lin( SLog.x, B, AB, W);
+linear.y = SLog2_to_lin( SLog.y, B, AB, W);
+linear.z = SLog2_to_lin( SLog.z, B, AB, W);
+float3 aces = mult_f3_f33( linear, matrixCoef );
+return aces;
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+aces = IDT_Sony_SLog2_SGamut3Cine(aces);
+
+return aces;
+}

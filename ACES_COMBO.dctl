@@ -23,7 +23,7 @@ case ACESCCTIN:
 {aces = ACEScct_to_ACES(aces);}
 break;
 case REC709IN:
-{aces = IDT_rec709(aces);}
+{aces = IDT_Rec709(aces);}
 break;
 case SRGBIN:
 {aces = IDT_sRGB(aces);}
@@ -38,13 +38,13 @@ case PANAV35:
 {aces = IDT_Panasonic_V35(aces);}
 break;
 case SLOG1SGAMUT:
-{aces = IDT_Sony_SLog1_SGamut_10(aces);}
+{aces = IDT_Sony_SLog1_SGamut(aces);}
 break;
 case SLOG2SGAMUT_DAY:
-{aces = IDT_Sony_SLog2_SGamut_Daylight_10(aces);}
+{aces = IDT_Sony_SLog2_SGamut_Daylight(aces);}
 break;
 case SLOG2SGAMUT_TNG:
-{aces = IDT_Sony_SLog2_SGamut_Tungsten_10(aces);}
+{aces = IDT_Sony_SLog2_SGamut_Tungsten(aces);}
 break;
 case SLOG3SGAMUT3:
 {aces = IDT_Sony_SLog3_SGamut3(aces);}
@@ -53,9 +53,9 @@ case SLOG3SGAMUT3CINE:
 {aces = IDT_Sony_SLog3_SGamut3Cine(aces);}}
 
 if(Exposure != 0.0f){ 
-aces.x *= _powf(2.0f, Exposure); 
-aces.y *= _powf(2.0f, Exposure); 
-aces.z *= _powf(2.0f, Exposure); 
+aces.x *= _exp2f(Exposure); 
+aces.y *= _exp2f(Exposure); 
+aces.z *= _exp2f(Exposure); 
 } 
 
 switch (LMT){
