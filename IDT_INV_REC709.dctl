@@ -49,10 +49,6 @@ mat3 D; D.c0 = A; D.c1 = B; D.c2 = C;
 return D;
 }
 
-__DEVICE__ float _exp10f(float x) {
-return _powf(10.0f, x);
-}
-
 __DEVICE__ float3 max_f3_f( float3 rgb, float max) {
 return make_float3(_fmaxf(rgb.x, max),_fmaxf(rgb.y, max),_fmaxf(rgb.z, max));
 }
@@ -229,8 +225,8 @@ return L;
 
 __DEVICE__ SegmentedSplineParams_c5 RRT_PARAMS() {
 SegmentedSplineParams_c5 A = {{ -4.0f, -4.0f, -3.1573765773f, -0.4852499958f, 1.8477324706f, 1.8477324706f}, 
-{ -0.7185482425f, 2.0810307172f, 3.6681241237f, 4.0f, 4.0f, 4.0f}, {0.18f * _powf(2.0f, -15.0f), 0.0001f}, 
-{0.18f, 4.8f}, {0.18f * _powf(2.0f, 18.0f), 10000.0f}, 0.0f, 0.0f};
+{ -0.7185482425f, 2.0810307172f, 3.6681241237f, 4.0f, 4.0f, 4.0f}, {0.18f * _exp2f(-15.0f), 0.0001f}, 
+{0.18f, 4.8f}, {0.18f * _exp2f(18.0f), 10000.0f}, 0.0f, 0.0f};
 return A;
 }
 
@@ -309,8 +305,8 @@ __DEVICE__ SegmentedSplineParams_c9 ODT_48nits() {
 SegmentedSplineParams_c9 A =
 {{ -1.6989700043f, -1.6989700043f, -1.4779f, -1.2291f, -0.8648f, -0.448f, 0.00518f, 0.4511080334f, 0.9113744414f, 0.9113744414f},
 { 0.5154386965f, 0.8470437783f, 1.1358f, 1.3802f, 1.5197f, 1.5985f, 1.6467f, 1.6746091357f, 1.6878733390f, 1.6878733390f },
-{segmented_spline_c5_fwd( 0.18f * _powf(2.0f, -6.5f) ),  0.02f},{segmented_spline_c5_fwd( 0.18f ), 4.8f},
-{segmented_spline_c5_fwd( 0.18f * _powf(2.0f, 6.5f) ), 48.0f}, 0.0f, 0.04f};
+{segmented_spline_c5_fwd( 0.18f * _exp2f(-6.5f) ),  0.02f},{segmented_spline_c5_fwd( 0.18f ), 4.8f},
+{segmented_spline_c5_fwd( 0.18f * _exp2f(6.5f) ), 48.0f}, 0.0f, 0.04f};
 return A;
 };
 

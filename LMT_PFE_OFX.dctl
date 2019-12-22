@@ -1,5 +1,5 @@
 // LMT Print Film Emulation OFX DCTL
-// Requires ACES_DCTL set
+// Requires ACES_LIB.h
 
 DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -1, 1, 0.001)
 DEFINE_UI_PARAMS(Saturation, Saturation, DCTLUI_SLIDER_FLOAT, 0.7, 0, 1, 0.001)
@@ -13,14 +13,13 @@ __DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
 
 float3 aces = make_float3(p_R, p_G, p_B); 
 
-if(ACESCCT){
+if (ACESCCT) {
 aces = ACEScct_to_ACES(aces);
 } else {
 aces = ACEScc_to_ACES(aces);
 }
 
-if(Exposure != 0.0f) 
-{ 
+if (Exposure != 0.0f) { 
 aces.x *= _exp2f(Exposure); 
 aces.y *= _exp2f(Exposure); 
 aces.z *= _exp2f(Exposure); 
@@ -31,7 +30,7 @@ aces = scale_C( aces, Saturation);
 float3 SLOPE = make_float3(1.0f, 1.0f, 0.94f);
 float3 OFFSET = make_float3(0.0f, 0.0f, 0.02f);
 float3 POWER = make_float3(1.0f, 1.0f, 1.0f);
-aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER);
+aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER, 1.0f);
 
 aces = gamma_adjust_linear( aces, Contrast, 0.18f);
 
@@ -42,7 +41,7 @@ aces = scale_C_at_H( aces, 45.0f, 40.0f, 1.4f);
 aces = rotate_H_in_H( aces, 190.0f, 40.0f, 30.0f);
 aces = scale_C_at_H( aces, 240.0f, 120.0f, 1.4f);
 
-if(ACESCCT){
+if (ACESCCT) {
 aces = ACES_to_ACEScct(aces);
 } else {
 aces = ACES_to_ACEScc(aces); 

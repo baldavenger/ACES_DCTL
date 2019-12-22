@@ -1,5 +1,5 @@
 // REDWideGamutRGB Log3G10 Print Film Emulation OFX DCTL
-// Requires ACES_DCTL set
+// Requires ACES_LIB.h
 
 DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -3, 3, 0.001)
 DEFINE_UI_PARAMS(Sat, Saturation, DCTLUI_SLIDER_FLOAT, 1, 0, 2, 0.001)
@@ -14,8 +14,7 @@ DEFINE_UI_PARAMS(PFE, Enable PFE, DCTLUI_CHECK_BOX, 1)
 
 __CONSTANT__ float AP0_Rec709[9] = {2.52161f, -1.13407f, -0.387538f, -0.276482f, 1.37272f, -0.0962352f, -0.0153831f, -0.152991f, 1.16837f};
 
-__DEVICE__ float3 Sigmoid( float3 In, float peak, float curve, float pivot, float offset)
-{
+__DEVICE__ float3 Sigmoid( float3 In, float peak, float curve, float pivot, float offset) {
 float3 out;
 pivot = 0.435f - pivot/10.0f;
 out.x = peak / (1.0f + _expf(-8.9f * curve * (In.x - pivot))) + offset;
@@ -24,8 +23,7 @@ out.z = peak / (1.0f + _expf(-8.9f * curve * (In.z - pivot))) + offset;
 return out;
 }
 
-__DEVICE__ float log3G10( float x)
-{
+__DEVICE__ float log3G10( float x) {
 const float a = 0.224282f;
 const float b = 155.975327f;
 const float c = 0.01f;
@@ -38,8 +36,7 @@ float output = a * _log10f((x * b) + 1.0f);
 return output;
 }
 
-__DEVICE__ float Sat_Soft_Clip( float S, float softclip)
-{
+__DEVICE__ float Sat_Soft_Clip( float S, float softclip) {
 softclip *= 0.3f;
 return S > softclip ? (-1.0f / ((S - softclip) / (1.0f - softclip) + 1.0f) + 1.0f) * (1.0f - softclip) + softclip : S;
 }
@@ -52,18 +49,18 @@ aces = IDT_REDWideGamutRGB_Log3G10(aces);
 
 float Saturation = Sat;
 
-if(Exposure != 0.0f) 
+if (Exposure != 0.0f) 
 aces = aces * _exp2f(Exposure);
 
-if(PFE) Saturation = 0.7f * Sat;
+if (PFE) Saturation = 0.7f * Sat;
 aces = scale_C( aces, Saturation);
 
 float3 SLOPE = make_float3(1.0f, 1.0f, 0.94f);
 float3 OFFSET = make_float3(0.0f, 0.0f, 0.02f);
 float3 POWER = make_float3(1.0f, 1.0f, 1.0f);
 
-if(PFE){
-aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER);
+if (PFE) {
+aces = ASCCDL_inACEScct( aces, SLOPE, OFFSET, POWER, 1.0f);
 aces = gamma_adjust_linear( aces, 1.5f, 0.18f);
 aces = rotate_H_in_H( aces, 0.0f, 30.0f, 5.0f);
 aces = rotate_H_in_H( aces, 80.0f, 60.0f, -15.0f);
@@ -84,7 +81,7 @@ RGB.z = log3G10(RGB.z);
 
 RGB = Sigmoid( RGB, peak * 1.2f, curve, pivot, offset);
 
-if (softClip > 0.0f){
+if (softClip > 0.0f) {
 RGB = rgb_2_ych(RGB);
 RGB.y = Sat_Soft_Clip( RGB.y, 1.0f - softClip);
 RGB = ych_2_rgb(RGB);

@@ -1,4 +1,4 @@
-// ACES 1.1 OFX DCTL
+// ACES 1.2 OFX DCTL
 
 DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -6, 6, 0.001)
 DEFINE_UI_PARAMS(IDT, IDT, DCTLUI_COMBO_BOX, 0, { IDT_OFF, ACESCCIN, ACESCCTIN, REC709IN, SRGBIN, ARRI, RED, PANAV35, SLOG1SGAMUT, SLOG2SGAMUT_DAY, SLOG2SGAMUT_TNG, SLOG3SGAMUT3, SLOG3SGAMUT3CINE }, { off, acescc, acescct, rec709, srgb, arri, red, panav35, slog1 sgamut, slog2 sgamut daylight, slog2 sgamut tungsten, slog3 sgamut3, slog3 sgamut3cine})
