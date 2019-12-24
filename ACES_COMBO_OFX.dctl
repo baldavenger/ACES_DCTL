@@ -1,0 +1,263 @@
+// ACES 1.2 COMBO OFX DCTL
+
+DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -6, 6, 0.001)
+DEFINE_UI_PARAMS(p_CSCIN, ACESCSCin, DCTLUI_COMBO_BOX, 0, { CSCIN_OFF, ACESCCIN, ACESCCTIN, ACESCGIN, ACESPROXYIN, ADXIN, ICPCTIN, LOGCAWGIN, LOG3G10RWGIN, SLOG3SG3IN, SLOG3SG3CIN }, { off, acescc, acescct, acescg, acesproxy, adx, icpct, arri logc awg, red log3g10 rwg, slog3 sg3, slog3 sg3c })
+DEFINE_UI_PARAMS(p_IDT, IDT, DCTLUI_COMBO_BOX, 0, { IDT_OFF, REC709IN, SRGBIN, PANAV35, CANONC100, CANONC100MK2, CANONC300, CANONC500, CANONC500CINE, CANONC500DCIP3, CANONC300MK2CLOGBT2020, CANONC300MK2CLOGCINE, CANONC300MK2CLOG2BT2020, CANONC300MK2CLOG2CINE, CANONC300MK2CLOG3BT2020, CANONC300MK2CLOG3CINE, SLOG1SGAMUT, SLOG2SGAMUT, VENICESGAMUT3, VENICESGAMUT3CINE }, { off, rec709, srgb, panav35, canon c100, canon c100mk2, canon c300, canon c500, canon c500 cine, canon c500 dcip3, c300mk2 clog bt2020, c300mk2 clog cine, c300mk2 clog2 bt2020, c300mk2 clog2 cine, c300mk2 clog3 bt2020, c300mk2 clog3 cine, slog1 sgamut, slog2 sgamut, venice sgamut3, venice sgamut3cine })
+DEFINE_UI_PARAMS(p_LMT, LMT, DCTLUI_COMBO_BOX, 0, { LMT_OFF, BLUEFIX, PFE, BLEACH }, { off, blue fix, pfe, bleach })
+DEFINE_UI_PARAMS(p_CSCOUT, ACESCSCout, DCTLUI_COMBO_BOX, 0, { CSCOUT_OFF, ACESCCOUT, ACESCCTOUT, ACESCGOUT, ACESPROXYOUT, ADXOUT, ICPCTOUT, LOGCAWGOUT, LOG3G10RWGOUT, SLOG3SG3OUT, SLOG3SG3COUT }, { off, acescc, acescct, acescg, acesproxy, adx, icpct, arri logc awg, red log3g10 rwg, slog3 sg3, slog3 sg3c })
+DEFINE_UI_PARAMS(p_RRT, RRT, DCTLUI_COMBO_BOX, 0, { RRT_OFF, RRT_on }, { off, rrt })
+DEFINE_UI_PARAMS(p_ODT, ODT, DCTLUI_COMBO_BOX, 0, { ODT_OFF, REC709, REC709D60, SRGB, SRGBD60, REC2020100, REC2020100_REC709LIM, REC2020ST20841000, REC2020100P3D65LIM, P3DCI48, P3DCI48D60, P3DCI48D65, P3D6048, P3D6548, P3D6548D60, P3D6548_REC709LIM, DCDM, DCDMP3D60, DCDMP3D65, RGBMON100, RGBMON100D60, RRTODT_REC709, RRTODT_SRGB, RRTODT_REC20201000HLG, RRTODT_REC20201000ST2084, RRTODT_REC20202000ST2084, RRTODT_REC20204000ST2084, RRTODT_P3D65108ST2084, RRTODT_P3D651000ST2084, RRTODT_P3D652000ST2084, RRTODT_P3D654000ST2084 }, { off, rec709, rec709 d60sim, srgb, srgb d60sim, rec2020 nits100, rec2020 nits100 rec709lim, rec2020 st2084 nits1000, rec2020 p3d65lim nits100, p3dci nits48, p3dci d60sim nits48, p3dci d65sim nits48, p3d60 nits48, p3d65 nits48, p3d65 d60sim nits48, p3d65 rec709lim nits48, dcdm, dcdm p3d60lim, dcdm p3d65lim, rgb monitor nits100, rgb monitor d60sim nits100, rrtodt rec709, rrtodt srgb, rrtodt rec2020 hlg, rrtodt rec2020 st2084 nits1000, rrtodt rec2020 st2084 nits2000, rrtodt rec2020 st2084 nits4000, rrtodt p3d65 st2084 t108nits, rrtodt p3d65 st2084 nits1000, rrtodt p3d65 st2084 nits2000, rrtodt p3d65 st2084 nits4000 })
+
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+switch (p_CSCIN){
+case CSCIN_OFF:
+{}
+break;
+case ACESCCIN:
+{aces = ACEScc_to_ACES(aces);}
+break;
+case ACESCCTIN:
+{aces = ACEScct_to_ACES(aces);}
+break;
+case ACESCGIN:
+{aces = ACEScg_to_ACES(aces);}
+break;
+case ACESPROXYIN:
+{aces = ACESproxy_to_ACES(aces);}
+break;
+case ADXIN:
+{aces = ADX_to_ACES(aces);}
+break;
+case ICPCTIN:
+{aces = ICpCt_to_ACES(aces);}
+break;
+case LOGCAWGIN:
+{aces = LogC_EI800_AWG_to_ACES(aces);}
+break;
+case LOG3G10RWGIN:
+{aces = Log3G10_RWG_to_ACES(aces);}
+break;
+case SLOG3SG3IN:
+{aces = SLog3_SG3_to_ACES(aces);}
+break;
+case SLOG3SG3CIN:
+{aces = SLog3_SG3C_to_ACES(aces);}}
+
+switch (p_IDT){
+case IDT_OFF:
+{}
+break;
+case REC709IN:
+{aces = IDT_Rec709(aces);}
+break;
+case SRGBIN:
+{aces = IDT_sRGB(aces);}
+break;
+case PANAV35:
+{aces = IDT_Panasonic_V35(aces);}
+break;
+case CANONC100:
+{aces = IDT_Canon_C100_A_D55(aces);}
+break;
+case CANONC100MK2:
+{aces = IDT_Canon_C100mk2_A_D55(aces);}
+break;
+case CANONC300:
+{aces = IDT_Canon_C300_A_D55(aces);}
+break;
+case CANONC500:
+{aces = IDT_Canon_C500_A_D55(aces);}
+break;
+case CANONC500CINE:
+{aces = IDT_Canon_C500_CinemaGamut_A_D55(aces);}
+break;
+case CANONC500DCIP3:
+{aces = IDT_Canon_C500_DCI_P3_A_D55(aces);}
+break;
+case CANONC300MK2CLOGBT2020:
+{aces = IDT_Canon_C300mk2_CanonLog_BT2020_D_D55(aces);}
+break;
+case CANONC300MK2CLOGCINE:
+{aces = IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_D55(aces);}
+break;
+case CANONC300MK2CLOG2BT2020:
+{aces = IDT_Canon_C300mk2_CanonLog2_BT2020_B_D55(aces);}
+break;
+case CANONC300MK2CLOG2CINE:
+{aces = IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_D55(aces);}
+break;
+case CANONC300MK2CLOG3BT2020:
+{aces = IDT_Canon_C300mk2_CanonLog3_BT2020_F_D55(aces);}
+break;
+case CANONC300MK2CLOG3CINE:
+{aces = IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_D55(aces);}
+break;
+case SLOG1SGAMUT:
+{aces = IDT_Sony_SLog1_SGamut(aces);}
+break;
+case SLOG2SGAMUT:
+{aces = IDT_Sony_SLog2_SGamut_Daylight(aces);}
+break;
+case VENICESGAMUT3:
+{aces = IDT_Sony_Venice_SGamut3(aces);}
+break;
+case VENICESGAMUT3CINE:
+{aces = IDT_Sony_Venice_SGamut3Cine(aces);}}
+
+if (Exposure != 0.0f) { 
+aces.x *= _exp2f(Exposure); 
+aces.y *= _exp2f(Exposure); 
+aces.z *= _exp2f(Exposure); 
+} 
+
+switch (p_LMT){
+case LMT_OFF:
+{}
+break;
+case BLUEFIX:
+{aces = LMT_BlueLightArtifactFix(aces);}
+break;
+case PFE:
+{aces = LMT_PFE(aces);}
+break;
+case BLEACH:
+{aces = LMT_Bleach(aces);}}
+
+switch (p_CSCOUT){
+case CSCOUT_OFF:
+{}
+break;
+case ACESCCOUT:
+{aces = ACES_to_ACEScc(aces);}
+break;
+case ACESCCTOUT:
+{aces = ACES_to_ACEScct(aces);}
+break;
+case ACESCGOUT:
+{aces = ACES_to_ACEScg(aces);}
+break;
+case ACESPROXYOUT:
+{aces = ACES_to_ACESproxy(aces);}
+break;
+case ADXOUT:
+{aces = ACES_to_ADX(aces);}
+break;
+case ICPCTOUT:
+{aces = ACES_to_ICpCt(aces);}
+break;
+case LOGCAWGOUT:
+{aces = ACES_to_LogC_EI800_AWG(aces);}
+break;
+case LOG3G10RWGOUT:
+{aces = ACES_to_Log3G10_RWG(aces);}
+break;
+case SLOG3SG3OUT:
+{aces = ACES_to_SLog3_SG3(aces);}
+break;
+case SLOG3SG3COUT:
+{aces = ACES_to_SLog3_SG3C(aces);}}
+
+if (p_RRT == 1 && p_ODT < 20 )
+aces = RRT(aces);
+
+switch (p_ODT){
+case ODT_OFF:
+{}
+break;
+case REC709:
+{aces = ODT_Rec709_100nits_dim(aces);}
+break;
+case REC709D60:
+{aces = ODT_Rec709_D60sim_100nits_dim(aces);}
+break;
+case SRGB:
+{aces = ODT_sRGB_100nits_dim(aces);}
+break;
+case SRGBD60:
+{aces = ODT_sRGB_D60sim_100nits_dim(aces);}
+break;
+case REC2020100:
+{aces = ODT_Rec2020_100nits_dim(aces);}
+break;
+case REC2020100_REC709LIM:
+{aces = ODT_Rec2020_Rec709limited_100nits_dim(aces);}
+break;
+case REC2020ST20841000:
+{aces = ODT_Rec2020_ST2084_1000nits(aces);}
+break;
+case REC2020100P3D65LIM:
+{aces = ODT_Rec2020_P3D65limited_100nits_dim(aces);}
+break;
+case P3DCI48:
+{aces = ODT_P3DCI_48nits(aces);}
+break;
+case P3DCI48D60:
+{aces = ODT_P3DCI_D60sim_48nits(aces);}
+break;
+case P3DCI48D65:
+{aces = ODT_P3DCI_D65sim_48nits(aces);}
+break;
+case P3D6048:
+{aces = ODT_P3D60_48nits(aces);}
+break;
+case P3D6548:
+{aces = ODT_P3D65_48nits(aces);}
+break;
+case P3D6548D60:
+{aces = ODT_P3D65_D60sim_48nits(aces);}
+break;
+case P3D6548_REC709LIM:
+{aces = ODT_P3D65_Rec709limited_48nits(aces);}
+break;
+case DCDM:
+{aces = ODT_DCDM(aces);}
+break;
+case DCDMP3D60:
+{aces = ODT_DCDM_P3D60limited(aces);}
+break;
+case DCDMP3D65:
+{aces = ODT_DCDM_P3D65limited(aces);}
+break;
+case RGBMON100:
+{aces = ODT_RGBmonitor_100nits_dim(aces);}
+break;
+case RGBMON100D60:
+{aces = ODT_RGBmonitor_D60sim_100nits_dim(aces);}
+break;
+case RRTODT_REC709:
+{aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);}
+break;
+case RRTODT_SRGB:
+{aces = RRTODT_Rec709_100nits_10nits_sRGB(aces);}
+break;
+case RRTODT_REC20201000HLG:
+aces = RRTODT_Rec2020_1000nits_15nits_HLG(aces);
+break;
+case RRTODT_REC20201000ST2084:
+{aces = RRTODT_Rec2020_1000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_REC20202000ST2084:
+{aces = RRTODT_Rec2020_2000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_REC20204000ST2084:
+{aces = RRTODT_Rec2020_4000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D65108ST2084:
+{aces = RRTODT_P3D65_108nits_7_2nits_ST2084(aces);}
+break;
+case RRTODT_P3D651000ST2084:
+{aces = RRTODT_P3D65_1000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D652000ST2084:
+{aces = RRTODT_P3D65_2000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D654000ST2084:
+{aces = RRTODT_P3D65_4000nits_15nits_ST2084(aces);}}
+
+return aces;
+}

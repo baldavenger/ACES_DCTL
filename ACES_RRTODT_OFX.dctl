@@ -1,0 +1,80 @@
+// ACES 1.2 RRTODT OFX DCTL
+
+DEFINE_UI_PARAMS(p_RRTODT, RRTODT, DCTLUI_COMBO_BOX, 0, { RRTODT_OFF, RRTODT_REC709, RRTODT_SRGB, RRTODT_REC20201000HLG, RRTODT_REC20201000ST2084, RRTODT_REC20202000ST2084, RRTODT_REC20204000ST2084, RRTODT_P3D65108ST2084, RRTODT_P3D651000ST2084, RRTODT_P3D652000ST2084, RRTODT_P3D654000ST2084 }, { off, rrtodt rec709, rrtodt srgb, rrtodt rec2020 hlg, rrtodt rec2020 st2084 nits1000, rrtodt rec2020 st2084 nits2000, rrtodt rec2020 st2084 nits4000, rrtodt p3d65 st2084 t108nits, rrtodt p3d65 st2084 nits1000, rrtodt p3d65 st2084 nits2000, rrtodt p3d65 st2084 nits4000 })
+DEFINE_UI_PARAMS(p_InvRRTODT, InvRRTODT, DCTLUI_COMBO_BOX, 0, { InvRRTODT_OFF, InvRRTODT_REC709, InvRRTODT_SRGB, InvRRTODT_REC20201000HLG, InvRRTODT_REC20201000ST2084, InvRRTODT_REC20202000ST2084, InvRRTODT_REC20204000ST2084, InvRRTODT_P3D65108ST2084, InvRRTODT_P3D651000ST2084, InvRRTODT_P3D652000ST2084, InvRRTODT_P3D654000ST2084 }, { off, invrrtodt rec709, invrrtodt srgb, invrrtodt rec2020 hlg, invrrtodt rec2020 st2084 nits1000, invrrtodt rec2020 st2084 nits2000, invrrtodt rec2020 st2084 nits4000, invrrtodt p3d65 st2084 t108nits, invrrtodt p3d65 st2084 nits1000, invrrtodt p3d65 st2084 nits2000, invrrtodt p3d65 st2084 nits4000 })
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+switch (p_RRTODT){
+case RRTODT_OFF:
+{}
+break;
+case RRTODT_REC709:
+{aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);}
+break;
+case RRTODT_SRGB:
+{aces = RRTODT_Rec709_100nits_10nits_sRGB(aces);}
+break;
+case RRTODT_REC20201000HLG:
+aces = RRTODT_Rec2020_1000nits_15nits_HLG(aces);
+break;
+case RRTODT_REC20201000ST2084:
+{aces = RRTODT_Rec2020_1000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_REC20202000ST2084:
+{aces = RRTODT_Rec2020_2000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_REC20204000ST2084:
+{aces = RRTODT_Rec2020_4000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D65108ST2084:
+{aces = RRTODT_P3D65_108nits_7_2nits_ST2084(aces);}
+break;
+case RRTODT_P3D651000ST2084:
+{aces = RRTODT_P3D65_1000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D652000ST2084:
+{aces = RRTODT_P3D65_2000nits_15nits_ST2084(aces);}
+break;
+case RRTODT_P3D654000ST2084:
+{aces = RRTODT_P3D65_4000nits_15nits_ST2084(aces);}}
+
+switch (p_InvRRTODT){
+case InvRRTODT_OFF:
+{}
+break;
+case InvRRTODT_REC709:
+{aces = InvRRTODT_Rec709_100nits_10nits_BT1886(aces);}
+break;
+case InvRRTODT_SRGB:
+{aces = InvRRTODT_Rec709_100nits_10nits_sRGB(aces);}
+break;
+case InvRRTODT_REC20201000HLG:
+aces = InvRRTODT_Rec2020_1000nits_15nits_HLG(aces);
+break;
+case InvRRTODT_REC20201000ST2084:
+{aces = InvRRTODT_Rec2020_1000nits_15nits_ST2084(aces);}
+break;
+case InvRRTODT_REC20202000ST2084:
+{aces = InvRRTODT_Rec2020_2000nits_15nits_ST2084(aces);}
+break;
+case InvRRTODT_REC20204000ST2084:
+{aces = InvRRTODT_Rec2020_4000nits_15nits_ST2084(aces);}
+break;
+case InvRRTODT_P3D65108ST2084:
+{aces = InvRRTODT_P3D65_108nits_7_2nits_ST2084(aces);}
+break;
+case InvRRTODT_P3D651000ST2084:
+{aces = InvRRTODT_P3D65_1000nits_15nits_ST2084(aces);}
+break;
+case InvRRTODT_P3D652000ST2084:
+{aces = InvRRTODT_P3D65_2000nits_15nits_ST2084(aces);}
+break;
+case InvRRTODT_P3D654000ST2084:
+{aces = InvRRTODT_P3D65_4000nits_15nits_ST2084(aces);}}
+
+return aces;
+}

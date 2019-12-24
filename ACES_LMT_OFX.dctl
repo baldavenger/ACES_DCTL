@@ -1,0 +1,32 @@
+// ACES 1.2 LMT OFX DCTL
+
+DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -6, 6, 0.001)
+DEFINE_UI_PARAMS(p_LMT, LMT, DCTLUI_COMBO_BOX, 0, { LMT_OFF, BLUEFIX, PFE, BLEACH }, { off, blue fix, pfe, bleach })
+
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+if (Exposure != 0.0f) { 
+aces.x *= _exp2f(Exposure); 
+aces.y *= _exp2f(Exposure); 
+aces.z *= _exp2f(Exposure); 
+} 
+
+switch (p_LMT){
+case LMT_OFF:
+{}
+break;
+case BLUEFIX:
+{aces = LMT_BlueLightArtifactFix(aces);}
+break;
+case PFE:
+{aces = LMT_PFE(aces);}
+break;
+case BLEACH:
+{aces = LMT_Bleach(aces);}}
+
+return aces;
+}

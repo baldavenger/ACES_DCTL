@@ -1,0 +1,81 @@
+// ACES 1.2 CSC OFX DCTL
+
+DEFINE_UI_PARAMS(p_CSCIN, ACESCSCin, DCTLUI_COMBO_BOX, 0, { CSCIN_OFF, ACESCCIN, ACESCCTIN, ACESCGIN, ACESPROXYIN, ADXIN, ICPCTIN, LOGCAWGIN, LOG3G10RWGIN, SLOG3SG3IN, SLOG3SG3CIN }, { off, acescc, acescct, acescg, acesproxy, adx, icpct, arri logc awg, red log3g10 rwg, slog3 sg3, slog3 sg3c })
+DEFINE_UI_PARAMS(p_CSCOUT, ACESCSCout, DCTLUI_COMBO_BOX, 0, { CSCOUT_OFF, ACESCCOUT, ACESCCTOUT, ACESCGOUT, ACESPROXYOUT, ADXOUT, ICPCTOUT, LOGCAWGOUT, LOG3G10RWGOUT, SLOG3SG3OUT, SLOG3SG3COUT }, { off, acescc, acescct, acescg, acesproxy, adx, icpct, arri logc awg, red log3g10 rwg, slog3 sg3, slog3 sg3c })
+
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+switch (p_CSCIN){
+case CSCIN_OFF:
+{}
+break;
+case ACESCCIN:
+{aces = ACEScc_to_ACES(aces);}
+break;
+case ACESCCTIN:
+{aces = ACEScct_to_ACES(aces);}
+break;
+case ACESCGIN:
+{aces = ACEScg_to_ACES(aces);}
+break;
+case ACESPROXYIN:
+{aces = ACESproxy_to_ACES(aces);}
+break;
+case ADXIN:
+{aces = ADX_to_ACES(aces);}
+break;
+case ICPCTIN:
+{aces = ICpCt_to_ACES(aces);}
+break;
+case LOGCAWGIN:
+{aces = LogC_EI800_AWG_to_ACES(aces);}
+break;
+case LOG3G10RWGIN:
+{aces = Log3G10_RWG_to_ACES(aces);}
+break;
+case SLOG3SG3IN:
+{aces = SLog3_SG3_to_ACES(aces);}
+break;
+case SLOG3SG3CIN:
+{aces = SLog3_SG3C_to_ACES(aces);}}
+
+switch (p_CSCOUT){
+case CSCOUT_OFF:
+{}
+break;
+case ACESCCOUT:
+{aces = ACES_to_ACEScc(aces);}
+break;
+case ACESCCTOUT:
+{aces = ACES_to_ACEScct(aces);}
+break;
+case ACESCGOUT:
+{aces = ACES_to_ACEScg(aces);}
+break;
+case ACESPROXYOUT:
+{aces = ACES_to_ACESproxy(aces);}
+break;
+case ADXOUT:
+{aces = ACES_to_ADX(aces);}
+break;
+case ICPCTOUT:
+{aces = ACES_to_ICpCt(aces);}
+break;
+case LOGCAWGOUT:
+{aces = ACES_to_LogC_EI800_AWG(aces);}
+break;
+case LOG3G10RWGOUT:
+{aces = ACES_to_Log3G10_RWG(aces);}
+break;
+case SLOG3SG3OUT:
+{aces = ACES_to_SLog3_SG3(aces);}
+break;
+case SLOG3SG3COUT:
+{aces = ACES_to_SLog3_SG3C(aces);}}
+
+return aces;
+}

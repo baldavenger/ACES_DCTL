@@ -1,0 +1,133 @@
+// ACES 1.2 ODT OFX DCTL
+
+DEFINE_UI_PARAMS(p_RRT, RRT, DCTLUI_COMBO_BOX, 0, { RRT_OFF, RRT_on }, { off, rrt })
+DEFINE_UI_PARAMS(p_ODT, ODT, DCTLUI_COMBO_BOX, 0, { ODT_OFF, REC709, REC709D60, SRGB, SRGBD60, REC2020100, REC2020100_REC709LIM, REC2020ST20841000, REC2020100P3D65LIM, P3DCI48, P3DCI48D60, P3DCI48D65, P3D6048, P3D6548, P3D6548D60, P3D6548_REC709LIM, DCDM, DCDMP3D60, DCDMP3D65, RGBMON100, RGBMON100D60 }, { off, rec709, rec709 d60sim, srgb, srgb d60sim, rec2020 nits100, rec2020 nits100 rec709lim, rec2020 st2084 nits1000, rec2020 p3d65lim nits100, p3dci nits48, p3dci d60sim nits48, p3dci d65sim nits48, p3d60 nits48, p3d65 nits48, p3d65 d60sim nits48, p3d65 rec709lim nits48, dcdm, dcdm p3d60lim, dcdm p3d65lim, rgb monitor nits100, rgb monitor d60sim nits100 })
+DEFINE_UI_PARAMS(p_InvODT, INVODT, DCTLUI_COMBO_BOX, 0, { InvODT_OFF, InvREC709, InvREC709D60, InvSRGB, InvSRGBD60, InvREC2020100, InvREC2020ST20841000, InvP3DCI48, InvP3DCI48D60, InvP3DCI48D65, InvP3D6048, InvP3D6548, InvP3D6548D60, InvDCDM, InvRGBMON100, InvRGBMON100D60 }, { off, rec709, rec709 d60sim, srgb, srgb d60sim, rec2020 nits100, rec2020 st2084 nits1000, p3dci nits48, p3dci d60sim nits48, p3dci d65sim nits48, p3d60 nits48, p3d65 nits48, p3d65 d60sim nits48, dcdm, rgb monitor nits100, rgb monitor d60sim nits100 })
+DEFINE_UI_PARAMS(p_InvRRT, INVRRT, DCTLUI_COMBO_BOX, 0, { InvRRT_OFF, InvRRT_on }, { off, invrrt })
+#include "ACES_LIB.h"
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+if (p_RRT == 1)
+aces = RRT(aces);
+
+switch (p_ODT){
+case ODT_OFF:
+{}
+break;
+case REC709:
+{aces = ODT_Rec709_100nits_dim(aces);}
+break;
+case REC709D60:
+{aces = ODT_Rec709_D60sim_100nits_dim(aces);}
+break;
+case SRGB:
+{aces = ODT_sRGB_100nits_dim(aces);}
+break;
+case SRGBD60:
+{aces = ODT_sRGB_D60sim_100nits_dim(aces);}
+break;
+case REC2020100:
+{aces = ODT_Rec2020_100nits_dim(aces);}
+break;
+case REC2020100_REC709LIM:
+{aces = ODT_Rec2020_Rec709limited_100nits_dim(aces);}
+break;
+case REC2020ST20841000:
+{aces = ODT_Rec2020_ST2084_1000nits(aces);}
+break;
+case REC2020100P3D65LIM:
+{aces = ODT_Rec2020_P3D65limited_100nits_dim(aces);}
+break;
+case P3DCI48:
+{aces = ODT_P3DCI_48nits(aces);}
+break;
+case P3DCI48D60:
+{aces = ODT_P3DCI_D60sim_48nits(aces);}
+break;
+case P3DCI48D65:
+{aces = ODT_P3DCI_D65sim_48nits(aces);}
+break;
+case P3D6048:
+{aces = ODT_P3D60_48nits(aces);}
+break;
+case P3D6548:
+{aces = ODT_P3D65_48nits(aces);}
+break;
+case P3D6548D60:
+{aces = ODT_P3D65_D60sim_48nits(aces);}
+break;
+case P3D6548_REC709LIM:
+{aces = ODT_P3D65_Rec709limited_48nits(aces);}
+break;
+case DCDM:
+{aces = ODT_DCDM(aces);}
+break;
+case DCDMP3D60:
+{aces = ODT_DCDM_P3D60limited(aces);}
+break;
+case DCDMP3D65:
+{aces = ODT_DCDM_P3D65limited(aces);}
+break;
+case RGBMON100:
+{aces = ODT_RGBmonitor_100nits_dim(aces);}
+break;
+case RGBMON100D60:
+{aces = ODT_RGBmonitor_D60sim_100nits_dim(aces);}}
+
+switch (p_InvODT){
+case InvODT_OFF:
+{}
+break;
+case InvREC709:
+{aces = InvODT_Rec709_100nits_dim(aces);}
+break;
+case InvREC709D60:
+{aces = InvODT_Rec709_D60sim_100nits_dim(aces);}
+break;
+case InvSRGB:
+{aces = InvODT_sRGB_100nits_dim(aces);}
+break;
+case InvSRGBD60:
+{aces = InvODT_sRGB_D60sim_100nits_dim(aces);}
+break;
+case InvREC2020100:
+{aces = InvODT_Rec2020_100nits_dim(aces);}
+break;
+case InvREC2020ST20841000:
+{aces = InvODT_Rec2020_ST2084_1000nits(aces);}
+break;
+case InvP3DCI48:
+{aces = InvODT_P3DCI_48nits(aces);}
+break;
+case InvP3DCI48D60:
+{aces = InvODT_P3DCI_D60sim_48nits(aces);}
+break;
+case InvP3DCI48D65:
+{aces = InvODT_P3DCI_D65sim_48nits(aces);}
+break;
+case InvP3D6048:
+{aces = InvODT_P3D60_48nits(aces);}
+break;
+case InvP3D6548:
+{aces = InvODT_P3D65_48nits(aces);}
+break;
+case InvP3D6548D60:
+{aces = InvODT_P3D65_D60sim_48nits(aces);}
+break;
+case InvDCDM:
+{aces = InvODT_DCDM(aces);}
+break;
+case InvRGBMON100:
+{aces = InvODT_RGBmonitor_100nits_dim(aces);}
+break;
+case InvRGBMON100D60:
+{aces = InvODT_RGBmonitor_D60sim_100nits_dim(aces);}}
+
+if (p_InvRRT == 1 )
+aces = InvRRT(aces);
+
+return aces;
+}
