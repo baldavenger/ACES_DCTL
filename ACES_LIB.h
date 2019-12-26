@@ -42,15 +42,6 @@ float coefsLow[6]; float coefsHigh[6];
 } TsParams;
 
 #define REF_PT				((7120.0f - 1520.0f) / 8000.0f * (100.0f / 55.0f) - _log10f(0.18f)) * 1.0f
-#define AP0_2_XYZ_MAT		RGBtoXYZ( AP0)
-#define XYZ_2_AP0_MAT		XYZtoRGB( AP0)
-#define AP1_2_XYZ_MAT		RGBtoXYZ( AP1)
-#define XYZ_2_AP1_MAT		XYZtoRGB( AP1)
-#define AP0_2_AP1_MAT		mult_f33_f33( AP0_2_XYZ_MAT, XYZ_2_AP1_MAT)
-#define AP1_2_AP0_MAT		mult_f33_f33( AP1_2_XYZ_MAT, XYZ_2_AP0_MAT)
-#define AP1_RGB2Y			make_float3(AP1_2_XYZ_MAT.c0.y, AP1_2_XYZ_MAT.c1.y, AP1_2_XYZ_MAT.c2.y)
-#define D60_2_D65_CAT		calculate_cat_matrix( AP0.white, REC709_PRI.white)
-
 __CONSTANT__ mat3 MM = { {0.5f, -1.0f, 0.5f}, {-1.0f, 1.0f, 0.5f}, {0.5f, 0.0f, 0.0f} };
 __CONSTANT__ mat3 M1 = { {0.5f, -1.0f, 0.5f}, {-1.0f, 1.0f, 0.5f}, {0.5f, 0.0f, 0.0f} };
 __CONSTANT__ float TINY = 1e-10f;
@@ -104,23 +95,23 @@ __CONSTANT__ Chromaticities REC2020_PRI =
 { {0.708f, 0.292f}, {0.17f, 0.797f}, {0.131f, 0.046f}, {0.3127f, 0.329f} };
 __CONSTANT__ Chromaticities RIMMROMM_PRI =
 { {0.7347f, 0.2653f}, {0.1596f, 0.8404f}, {0.0366f, 0.0001f}, {0.3457f, 0.3585f} };
-__CONSTANT__ mat3 CONE_RESP_MAT_BRADFORD =
+__CONSTANT__ mat3 CONE_RESP_MATRADFORD =
 { {0.8951f, -0.7502f, 0.0389f}, {0.2664f, 1.7135f, -0.0685f}, {-0.1614f, 0.0367f, 1.0296f} };
 __CONSTANT__ mat3 CONE_RESP_MAT_CAT02 =
 { {0.7328f, -0.7036f, 0.003f}, {0.4296f, 1.6975f, 0.0136f}, {-0.1624f, 0.0061f, 0.9834f} };
-__CONSTANT__ mat3 AP0_2_XYZ_MAT_B = 
+__CONSTANT__ mat3 AP0_2_XYZ_MAT = 
 { {0.9525523959f, 0.3439664498f, 0.0f}, {0.0f, 0.7281660966f, 0.0f}, {0.0000936786f, -0.0721325464f, 1.0088251844f} };
-__CONSTANT__ mat3 XYZ_2_AP0_MAT_B = 
+__CONSTANT__ mat3 XYZ_2_AP0_MAT = 
 { {1.0498110175f, -0.4959030231f, 0.0f}, {0.0f, 1.3733130458f, 0.0f}, {-0.0000974845f, 0.0982400361f, 0.9912520182f} };
-__CONSTANT__ mat3 AP1_2_XYZ_MAT_B = 
+__CONSTANT__ mat3 AP1_2_XYZ_MAT = 
 { {0.6624541811f, 0.2722287168f, -0.0055746495f}, {0.1340042065f, 0.6740817658f, 0.0040607335f}, {0.156187687f, 0.0536895174f, 1.0103391003f} };
-__CONSTANT__ mat3 XYZ_2_AP1_MAT_B = 
+__CONSTANT__ mat3 XYZ_2_AP1_MAT = 
 { {1.6410233797f, -0.6636628587f, 0.0117218943f}, {-0.3248032942f, 1.6153315917f, -0.008284442f}, {-0.2364246952f, 0.0167563477f, 0.9883948585f} };
-__CONSTANT__ mat3 AP0_2_AP1_MAT_B = 
+__CONSTANT__ mat3 AP0_2_AP1_MAT = 
 { {1.4514393161f, -0.0765537734f, 0.0083161484f}, {-0.2365107469f, 1.1762296998f, -0.0060324498f}, {-0.2149285693f, -0.0996759264f, 0.9977163014f} };
-__CONSTANT__ mat3 AP1_2_AP0_MAT_B = 
+__CONSTANT__ mat3 AP1_2_AP0_MAT = 
 { {0.6954522414f, 0.0447945634f, -0.0055258826f}, {0.1406786965f, 0.8596711185f, 0.0040252103f}, {0.1638690622f, 0.0955343182f, 1.0015006723f} };
-__CONSTANT__ mat3 D60_2_D65_CAT_B = 
+__CONSTANT__ mat3 D60_2_D65_CAT = 
 { {0.987224f, -0.00759836f, 0.00307257f}, {-0.00611327f, 1.00186f, -0.00509595f}, {0.0159533f, 0.00533002f, 1.08168f} };
 __CONSTANT__ mat3 LMS_2_AP0_MAT = 
 { { 2.2034860017f, -0.5267000086f, -0.0465914122f}, {-1.4028871323f,  1.5838401289f, -0.0457828327f}, { 0.1994183978f, -0.0571107433f, 1.0924829098f} };
@@ -146,17 +137,7 @@ __CONSTANT__ mat3 RWG_2_AP0_MAT =
 { { 0.7850585442f, 0.0231738066f, -0.0737605663f}, { 0.0838583156f, 1.0878975877f, -0.3145898729f}, { 0.1310821505f, -0.1110709153f, 1.3883506702f} };
 __CONSTANT__ mat3 AP0_2_RWG_MAT = 
 { { 1.2655392805f, -0.0205691227f, 0.0625750095f}, {-0.1352322515f,  0.9431709627f,  0.2065308369f}, {-0.1303056816f, 0.0773976700f, 0.7308939479f} };
-__CONSTANT__ float3 AP1_RGB2Y_B = {0.2722287168f, 0.6740817658f, 0.0536895174f};
-
-__DEVICE__ inline int size( float array[]) {
-int Size = sizeof(array)/sizeof(array[0]);
-return Size + 1;
-}
-
-__DEVICE__ inline int size_f2( float2 array[]) {
-int Size = sizeof(array)/sizeof(array[0]);
-return Size + 1;
-}
+__CONSTANT__ float3 AP1_RGB2Y = {0.2722287168f, 0.6740817658f, 0.0536895174f};
 
 __DEVICE__ inline Chromaticities make_chromaticities( float2 A, float2 B, float2 C, float2 D) {
 Chromaticities E;
@@ -357,40 +338,6 @@ R = make_mat3(make_float3(1.0f, 0.0f, 0.0f), make_float3(0.0f, 1.0f, 0.0f), make
 return R;
 }
 
-__DEVICE__ inline float lookup1D( float table[], float pMin, float pMax, float p) {
-int Size = size(table);
-if( p < pMin ) return table[ 0 ];
-if( p > pMax ) return table[ Size - 1 ];
-float t = (p - pMin) / (pMax - pMin ) * (Size - 1.0f);
-int i = _floor(t);
-float s = t - i;
-return table[i] * ( 1.0f - s ) + table[i + 1] * s;
-}
-
-__DEVICE__ inline float lookupCubic1D( float table[], float pMin, float pMax, float p) {
-int Size = size(table);
-if( p < pMin ) return table[ 0 ];
-if( p > pMax ) return table[ Size - 1 ];
-float t = (p - pMin) / (pMax - pMin) * (Size - 1 );
-int i = _floor(t);
-float s = t - i;
-float m0;
-float m1;
-if( i > 0 ){
-m0 = (table[i + 1] - table[i - 1]) / 2.0f;
-}
-if( i < Size-2 ){
-m1 = (table[i + 2] - table[i]) / 2.0f;
-}
-if( i == 0) {
-m0 = (3 * table[i+1] - table[i] - m1);
-}
-if( i == Size - 2 ){
-m1 = (3.0f * table[i + 1] - table[i] - m0);
-}
-return table[i] * (2.0f * s*s*s - 3.0f * s*s + 1.0f) + m0 * (s*s*s - 2.0f * s*s + s) + table[i + 1] * (-2.0f * s*s*s + 3.0f * s*s) + m1 * (s*s*s - s*s);
-}
-
 __DEVICE__ inline float interpolate1D( float2 table[], int Size, float p) {
 if( p <= table[0].x ) return table[0].y;
 if( p >= table[Size - 1].x ) return table[Size - 1].y;
@@ -398,42 +345,6 @@ for( int i = 0; i < Size - 1; ++i ){
 if( table[i].x <= p && p < table[i + 1].x ){
 float s = (p - table[i].x) / (table[i + 1].x - table[i].x);
 return table[i].y * ( 1.0f - s ) + table[i+1].y * s;}}
-return 0.0f;
-}
-
-__DEVICE__ inline float interpolateCubic1D( float2 table[], float p) {
-int Size = size_f2(table);
-if( p <= table[0].x ) return table[0].y;
-if( p >= table[Size - 1].x ) return table[Size - 1].y;
-if( Size == 2 ) {
-float s = (p - table[0].x) / (table[1].x - table[0].x);
-return (1.0f - s) * table[0].y + s * table[1].y;
-}
-for( int i = 0; i < Size - 1; ++i ){
-if( table[i].x <= p && p < table[i+1].x ){
-float s = (p - table[i].x) / (table[i + 1].x - table[i].x);
-float dx1 = (table[i + 1].x - table[i].x);
-float dy1 = (table[i + 1].y - table[i].y);
-float m0;
-float m1;
-if( i > 0 ){
-float dy0 = (table[i].y - table[i - 1].y);
-float dx0 = (table[i].x - table[i - 1].x);
-m0 = (dy1 + dx1 * dy0 / dx0) / 2.0f;
-}
-if( i < Size - 2 ){
-float dx2 = (table[i + 2].x - table[i + 1].x);
-float dy2 = (table[i + 2].y - table[i + 1].y);
-m1 = (dy1 + dx1 * dy2 / dx2) / 2.0f;
-}
-if( i == 0){
-m0 = (3.0f * dy1 - m1) / 2.0f;
-}
-if( i == Size - 2 ){
-m1 = (3.0f * dy1 - m0) / 2.0f;
-}
-return table[i].y * (2.0f * s*s*s - 3.0f * s*s + 1.0f) + m0 * (s*s*s - 2.0f * s*s + s) + table[i + 1].y * (-2.0f * s*s*s + 3.0f * s*s) + m1 * (s*s*s - s*s);
-}}
 return 0.0f;
 }
 
@@ -568,20 +479,6 @@ out = offset + (ns * slope);
 return encOffset + (out * encGain);
 }
 
-__DEVICE__ inline float Log3G10_to_lin_2016( float log3g10) {
-float a, b, c, mirror, linear;
-a = 0.224282f;
-b = 155.975327f;
-c = 0.01f;
-mirror = 1.0f;
-if (log3g10 < 0.0f){
-mirror = -1.0f;
-log3g10 = -log3g10;}
-linear = (_exp10f(log3g10 / a) - 1.0f) / b;
-linear = linear * mirror - c;
-return linear;
-}
-
 __DEVICE__ inline float Log3G10_to_lin( float log3g10) {
 const float a = 0.224282f;
 const float b = 155.975327f;
@@ -629,7 +526,7 @@ float hue = 0.0f;
 if (rgb.x == rgb.y && rgb.y == rgb.z) {
 hue = 0.0f;
 } else {
-hue = (180.0f/3.14159265358979323846264338327950288f) * _atan2f( _sqrtf(3.0f) * (rgb.y - rgb.z), 2.0f * rgb.x - rgb.y - rgb.z);
+hue = (180.0f/3.1415926535897932f) * _atan2f( _sqrtf(3.0f) * (rgb.y - rgb.z), 2.0f * rgb.x - rgb.y - rgb.z);
 }
 if (hue < 0.0f) hue = hue + 360.0f;
 return hue;
@@ -643,8 +540,8 @@ float chroma = _sqrtf(b * (b - g) + g * (g - r) + r * (r - b));
 return ( b + g + r + ycRadiusWeight * chroma) / 3.0f;
 }
 
-__DEVICE__ inline mat3 calculate_cat_matrix( float2 src_xy, float2 des_xy) {
-mat3 coneRespMat = CONE_RESP_MAT_BRADFORD;
+__DEVICE__ mat3 calculate_cat_matrix( float2 src_xy, float2 des_xy) {
+mat3 coneRespMat = CONE_RESP_MATRADFORD;
 const float3 src_xyY = { src_xy.x, src_xy.y, 1.0f };
 const float3 des_xyY = { des_xy.x, des_xy.y, 1.0f };
 float3 src_XYZ = xyY_2_XYZ( src_xyY );
@@ -660,12 +557,13 @@ mat3 cat_matrix = mult_f33_f33( coneRespMat, mult_f33_f33( vkMat, invert_f33( co
 return cat_matrix;
 }
 
-__DEVICE__ inline mat3 calc_sat_adjust_matrix( float sat, float3 rgb2Y) {
+__DEVICE__ mat3 calc_sat_adjust_matrix( float sat, float3 rgb2Y) {
 float M[3][3];
 M[0][0] = (1.0f - sat) * rgb2Y.x + sat; M[1][0] = (1.0f - sat) * rgb2Y.x; M[2][0] = (1.0f - sat) * rgb2Y.x;
 M[0][1] = (1.0f - sat) * rgb2Y.y; M[1][1] = (1.0f - sat) * rgb2Y.y + sat; M[2][1] = (1.0f - sat) * rgb2Y.y;
 M[0][2] = (1.0f - sat) * rgb2Y.z; M[1][2] = (1.0f - sat) * rgb2Y.z; M[2][2] = (1.0f - sat) * rgb2Y.z + sat;
-mat3 R = make_mat3(make_float3(M[0][0], M[0][1], M[0][2]), make_float3(M[1][0], M[1][1], M[1][2]), make_float3(M[2][0], M[2][1], M[2][2]));
+mat3 R = make_mat3(make_float3(M[0][0], M[0][1], M[0][2]), 
+make_float3(M[1][0], M[1][1], M[1][2]), make_float3(M[2][0], M[2][1], M[2][2]));
 R = transpose_f33(R);
 return R;
 }
@@ -694,13 +592,17 @@ return x;
 
 __DEVICE__ inline float3 moncurve_f_f3( float3 x, float gamma, float offs) {
 float3 y;
-y.x = moncurve_f( x.x, gamma, offs); y.y = moncurve_f( x.y, gamma, offs); y.z = moncurve_f( x.z, gamma, offs);
+y.x = moncurve_f( x.x, gamma, offs); 
+y.y = moncurve_f( x.y, gamma, offs); 
+y.z = moncurve_f( x.z, gamma, offs);
 return y;
 }
 
 __DEVICE__ inline float3 moncurve_r_f3( float3 y, float gamma, float offs) {
 float3 x;
-x.x = moncurve_r( y.x, gamma, offs); x.y = moncurve_r( y.y, gamma, offs); x.z = moncurve_r( y.z, gamma, offs);
+x.x = moncurve_r( y.x, gamma, offs); 
+x.y = moncurve_r( y.y, gamma, offs); 
+x.z = moncurve_r( y.z, gamma, offs);
 return x;
 }
 
@@ -744,13 +646,17 @@ return ( in * ( REFWHITE - REFBLACK) + REFBLACK );
 
 __DEVICE__ inline float3 smpteRange_to_fullRange_f3( float3 rgbIn) {
 float3 rgbOut;
-rgbOut.x = smpteRange_to_fullRange( rgbIn.x); rgbOut.y = smpteRange_to_fullRange( rgbIn.y); rgbOut.z = smpteRange_to_fullRange( rgbIn.z);
+rgbOut.x = smpteRange_to_fullRange( rgbIn.x); 
+rgbOut.y = smpteRange_to_fullRange( rgbIn.y); 
+rgbOut.z = smpteRange_to_fullRange( rgbIn.z);
 return rgbOut;
 }
 
 __DEVICE__ inline float3 fullRange_to_smpteRange_f3( float3 rgbIn) {
 float3 rgbOut;
-rgbOut.x = fullRange_to_smpteRange( rgbIn.x); rgbOut.y = fullRange_to_smpteRange( rgbIn.y); rgbOut.z = fullRange_to_smpteRange( rgbIn.z);
+rgbOut.x = fullRange_to_smpteRange( rgbIn.x); 
+rgbOut.y = fullRange_to_smpteRange( rgbIn.y); 
+rgbOut.z = fullRange_to_smpteRange( rgbIn.z);
 return rgbOut;
 }
 
@@ -790,17 +696,21 @@ return N;
 
 __DEVICE__ inline float3 Y_2_ST2084_f3( float3 in) {
 float3 out;
-out.x = Y_2_ST2084( in.x); out.y = Y_2_ST2084( in.y); out.z = Y_2_ST2084( in.z);
+out.x = Y_2_ST2084( in.x); 
+out.y = Y_2_ST2084( in.y); 
+out.z = Y_2_ST2084( in.z);
 return out;
 }
 
 __DEVICE__ inline float3 ST2084_2_Y_f3( float3 in) {
 float3 out;
-out.x = ST2084_2_Y( in.x); out.y = ST2084_2_Y( in.y); out.z = ST2084_2_Y( in.z);
+out.x = ST2084_2_Y( in.x); 
+out.y = ST2084_2_Y( in.y); 
+out.z = ST2084_2_Y( in.z);
 return out;
 }
 
-__DEVICE__ inline float3 ST2084_2_HLG_1000nits_f3( float3 PQ) {
+__DEVICE__ float3 ST2084_2_HLG_1000nits_f3( float3 PQ) {
 float3 displayLinear = ST2084_2_Y_f3( PQ);
 float Y_d = 0.2627f * displayLinear.x + 0.6780f * displayLinear.y + 0.0593f * displayLinear.z;
 const float L_w = 1000.0f;
@@ -838,7 +748,7 @@ HLG.z = a * _logf(12.0f * sceneLinear.z - b) + c;
 return HLG;
 }
 
-__DEVICE__ inline float3 HLG_2_ST2084_1000nits_f3( float3 HLG) {
+__DEVICE__ float3 HLG_2_ST2084_1000nits_f3( float3 HLG) {
 const float a = 0.17883277f;
 const float b = 0.28466892f;
 const float c = 0.55991073f;
@@ -883,7 +793,7 @@ SegmentedSplineParams_c5 A = {{ -4.0f, -4.0f, -3.1573765773f, -0.4852499958f, 1.
 return A;
 };
 
-__DEVICE__ inline float segmented_spline_c5_fwd( float x) {
+__DEVICE__ float segmented_spline_c5_fwd( float x) {
 SegmentedSplineParams_c5 C = RRT_PARAMS();
 const int N_KNOTS_LOW = 4;
 const int N_KNOTS_HIGH = 4;
@@ -911,7 +821,7 @@ logy = logx * C.slopeHigh + ( _log10f(C.maxPoint.y) - C.slopeHigh * _log10f(C.ma
 return _exp10f(logy);
 }
 
-__DEVICE__ inline SegmentedSplineParams_c9 ODT_48nits() {
+__DEVICE__ SegmentedSplineParams_c9 ODT_48nits() {
 SegmentedSplineParams_c9 A =
 {{ -1.6989700043f, -1.6989700043f, -1.4779f, -1.2291f, -0.8648f, -0.448f, 0.00518f, 0.4511080334f, 0.9113744414f, 0.9113744414f},
 { 0.5154386965f, 0.8470437783f, 1.1358f, 1.3802f, 1.5197f, 1.5985f, 1.6467f, 1.6746091357f, 1.6878733390f, 1.6878733390f },
@@ -920,7 +830,7 @@ SegmentedSplineParams_c9 A =
 return A;
 };
 
-__DEVICE__ inline SegmentedSplineParams_c9 ODT_1000nits() {
+__DEVICE__ SegmentedSplineParams_c9 ODT_1000nits() {
 SegmentedSplineParams_c9 A =
 {{ -4.9706219331f, -3.0293780669f, -2.1262f, -1.5105f, -1.0578f, -0.4668f, 0.11938f, 0.7088134201f, 1.2911865799f, 1.2911865799f },
 { 0.8089132070f, 1.1910867930f, 1.5683f, 1.9483f, 2.3083f, 2.6384f, 2.8595f, 2.9872608805f, 3.0127391195f, 3.0127391195f },
@@ -929,7 +839,7 @@ SegmentedSplineParams_c9 A =
 return A;
 };
 
-__DEVICE__ inline SegmentedSplineParams_c9 ODT_2000nits() {
+__DEVICE__ SegmentedSplineParams_c9 ODT_2000nits() {
 SegmentedSplineParams_c9 A =
 {{ -4.9706219331f, -3.0293780669f, -2.1262f, -1.5105f, -1.0578f, -0.4668f, 0.11938f, 0.7088134201f, 1.2911865799f, 1.2911865799f },
 { 0.8019952042f, 1.1980047958f, 1.5943f, 1.9973f, 2.3783f, 2.7684f, 3.0515f, 3.2746293562f, 3.3274306351f, 3.3274306351f },
@@ -938,7 +848,7 @@ SegmentedSplineParams_c9 A =
 return A;
 };
 
-__DEVICE__ inline SegmentedSplineParams_c9 ODT_4000nits() {
+__DEVICE__ SegmentedSplineParams_c9 ODT_4000nits() {
 SegmentedSplineParams_c9 A =
 {{ -4.9706219331f, -3.0293780669f, -2.1262f, -1.5105f, -1.0578f, -0.4668f, 0.11938f, 0.7088134201f, 1.2911865799f, 1.2911865799f },
 { 0.7973186613f, 1.2026813387f, 1.6093f, 2.0108f, 2.4148f, 2.8179f, 3.1725f, 3.5344995451f, 3.6696204376f, 3.6696204376f },
@@ -947,7 +857,7 @@ SegmentedSplineParams_c9 A =
 return A;
 };
 
-__DEVICE__ inline float segmented_spline_c5_rev( float y) {
+__DEVICE__ float segmented_spline_c5_rev( float y) {
 SegmentedSplineParams_c5 C = RRT_PARAMS();
 const int N_KNOTS_LOW = 4;
 const int N_KNOTS_HIGH = 4;
@@ -1003,7 +913,7 @@ logx = _log10f(C.maxPoint.x);
 return _exp10f( logx);
 }
 
-__DEVICE__ inline float segmented_spline_c9_fwd( float x, SegmentedSplineParams_c9 C) {
+__DEVICE__ float segmented_spline_c9_fwd( float x, SegmentedSplineParams_c9 C) {
 const int N_KNOTS_LOW = 8;
 const int N_KNOTS_HIGH = 8;
 float logx = _log10f( _fmaxf(x, 0.0f));
@@ -1030,7 +940,7 @@ logy = logx * C.slopeHigh + ( _log10f(C.maxPoint.y) - C.slopeHigh * _log10f(C.ma
 return _exp10f(logy);
 }
 
-__DEVICE__ inline float segmented_spline_c9_rev( float y, SegmentedSplineParams_c9 C) {
+__DEVICE__ float segmented_spline_c9_rev( float y, SegmentedSplineParams_c9 C) {
 const int N_KNOTS_LOW = 8;
 const int N_KNOTS_HIGH = 8;
 const float KNOT_INC_LOW = (_log10f(C.midPoint.x) - _log10f(C.minPoint.x)) / (N_KNOTS_LOW - 1.0f);
@@ -1101,7 +1011,7 @@ logx = _log10f(C.maxPoint.x);
 return _exp10f( logx);
 }
 
-__DEVICE__ inline float3 segmented_spline_c9_rev_f3( float3 rgbPre) {
+__DEVICE__ float3 segmented_spline_c9_rev_f3( float3 rgbPre) {
 SegmentedSplineParams_c9 C = ODT_48nits();
 float3 rgbPost;
 rgbPost.x = segmented_spline_c9_rev( rgbPre.x, C);
@@ -1110,7 +1020,7 @@ rgbPost.z = segmented_spline_c9_rev( rgbPre.z, C);
 return rgbPost;
 }
 
-__DEVICE__ inline float3 segmented_spline_c5_rev_f3( float3 rgbPre) {
+__DEVICE__ float3 segmented_spline_c5_rev_f3( float3 rgbPre) {
 float3 rgbPost;
 rgbPost.x = segmented_spline_c5_rev( rgbPre.x);
 rgbPost.y = segmented_spline_c5_rev( rgbPre.y);
@@ -1231,7 +1141,7 @@ out.z = ACESproxy[2] / 1023.0f;
 return out;
 }
 
-__DEVICE__ inline float3 adx_convertFromLinear( float3 aces) {
+__DEVICE__ float3 adx_convertFromLinear( float3 aces) {
 aces.x = aces.x < 0.00130127f ? (aces.x - 0.00130127f) / 0.04911331f :
 aces.x < 0.001897934f ? (_logf(aces.x) + 6.644415f) / 37.74261f : 
 aces.x < 0.118428f ? _logf(aces.x) * (0.02871031f * _logf(aces.x) + 0.383914f) + 1.288383f : 
@@ -1247,7 +1157,7 @@ aces.z < 0.118428f ? _logf(aces.z) * (0.02871031f * _logf(aces.z) + 0.383914f) +
 return aces;
 }
 
-__DEVICE__ inline float3 adx_convertToLinear( float3 aces) {
+__DEVICE__ float3 adx_convertToLinear( float3 aces) {
 aces.x = aces.x < 0.0f ? 0.04911331f * aces.x + 0.001301270f : 
 aces.x < 0.01f ? _expf(37.74261f * aces.x - 6.644415f) : 
 aces.x < 0.6f ? _expf(-6.685996f + 2.302585f * _powf(6.569476f * aces.x - 0.03258072f, 0.5f)) : 
@@ -1263,7 +1173,7 @@ _expf(_fminf(4.1865183f * aces.z - 4.645361f, 86.4f));
 return aces;
 }
 
-__DEVICE__ inline float3 ADX_to_ACES( float3 aces) {
+__DEVICE__ float3 ADX_to_ACES( float3 aces) {
 aces.x = aces.x * 2.048f - 0.19f;
 aces.y = aces.y * 2.048f - 0.19f;
 aces.z = aces.z * 2.048f - 0.19f;
@@ -1273,7 +1183,7 @@ aces = mult_f3_f33(aces, EXP_TO_ACES);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_ADX( float3 aces) {
+__DEVICE__ float3 ACES_to_ADX( float3 aces) {
 aces = mult_f3_f33(aces, invert_f33(EXP_TO_ACES));
 aces = adx_convertFromLinear(aces);
 aces =  mult_f3_f33(aces, invert_f33(CDD_TO_CID));
@@ -1283,7 +1193,7 @@ aces.z = (aces.z + 0.19f) / 2.048f;
 return aces;
 }
 
-__DEVICE__ inline float3 ICpCt_to_ACES( float3 ICtCp) {
+__DEVICE__ float3 ICpCt_to_ACES( float3 ICtCp) {
 float3 LMSp = mult_f3_f33( ICtCp, ICtCp_2_LMSp_MAT);
 float3 LMS;
 LMS.x = ST2084_2_Y(LMSp.x);
@@ -1295,7 +1205,7 @@ aces = mult_f_f3( 1.0f / scale, aces);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_ICpCt( float3 aces) {
+__DEVICE__ float3 ACES_to_ICpCt( float3 aces) {
 float scale = 209.0f;
 aces = mult_f_f3( scale, aces);
 float3 LMS = mult_f3_f33(aces, AP0_2_LMS_MAT);
@@ -1307,7 +1217,7 @@ float3 ICtCp = mult_f3_f33(LMSp, LMSp_2_ICtCp_MAT);
 return ICtCp;
 }
 
-__DEVICE__ inline float3 LogC_EI800_AWG_to_ACES( float3 in) {
+__DEVICE__ float3 LogC_EI800_AWG_to_ACES( float3 in) {
 float3 lin_AWG;
 lin_AWG.x = LogC_to_lin(in.x);
 lin_AWG.y = LogC_to_lin(in.y);
@@ -1316,7 +1226,7 @@ float3 aces = mult_f3_f33( lin_AWG, AWG_2_AP0_MAT);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_LogC_EI800_AWG( float3 in) {
+__DEVICE__ float3 ACES_to_LogC_EI800_AWG( float3 in) {
 float3 lin_AWG = mult_f3_f33( in, AP0_2_AWG_MAT);
 float3 out;
 out.x = lin_to_LogC(lin_AWG.x);
@@ -1325,7 +1235,7 @@ out.z = lin_to_LogC(lin_AWG.z);
 return out;
 }
 
-__DEVICE__ inline float3 Log3G10_RWG_to_ACES( float3 in) {
+__DEVICE__ float3 Log3G10_RWG_to_ACES( float3 in) {
 float3 lin_RWG;
 lin_RWG.x = Log3G10_to_lin(in.x);
 lin_RWG.y = Log3G10_to_lin(in.y);
@@ -1334,7 +1244,7 @@ float3 aces = mult_f3_f33( lin_RWG, RWG_2_AP0_MAT);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_Log3G10_RWG( float3 in) {
+__DEVICE__ float3 ACES_to_Log3G10_RWG( float3 in) {
 float3 lin_RWG = mult_f3_f33(in, AP0_2_RWG_MAT);
 float3 out;
 out.x = lin_to_Log3G10(lin_RWG.x);
@@ -1343,7 +1253,7 @@ out.z = lin_to_Log3G10(lin_RWG.z);
 return out;
 }
 
-__DEVICE__ inline float3 SLog3_SG3_to_ACES( float3 in) {
+__DEVICE__ float3 SLog3_SG3_to_ACES( float3 in) {
 float3 lin_SG3;
 lin_SG3.x = SLog3_to_lin(in.x);
 lin_SG3.y = SLog3_to_lin(in.y);
@@ -1352,7 +1262,7 @@ float3 aces = mult_f3_f33(lin_SG3, SG3_2_AP0_MAT);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_SLog3_SG3( float3 in) {
+__DEVICE__ float3 ACES_to_SLog3_SG3( float3 in) {
 float3 lin_SG3 = mult_f3_f33(in, AP0_2_SG3_MAT);
 float3 out;
 out.x = lin_to_SLog3(lin_SG3.x);
@@ -1361,7 +1271,7 @@ out.z = lin_to_SLog3(lin_SG3.z);
 return out;
 }
 
-__DEVICE__ inline float3 SLog3_SG3C_to_ACES( float3 in) {
+__DEVICE__ float3 SLog3_SG3C_to_ACES( float3 in) {
 float3 lin_SG3C;
 lin_SG3C.x = SLog3_to_lin(in.x);
 lin_SG3C.y = SLog3_to_lin(in.y);
@@ -1370,7 +1280,7 @@ float3 aces = mult_f3_f33(lin_SG3C, SG3C_2_AP0_MAT);
 return aces;
 }
 
-__DEVICE__ inline float3 ACES_to_SLog3_SG3C( float3 in) {
+__DEVICE__ float3 ACES_to_SLog3_SG3C( float3 in) {
 float3 lin_SG3C = mult_f3_f33(in, AP0_2_SG3C_MAT);
 float3 out;
 out.x = lin_to_SLog3(lin_SG3C.x);
@@ -1379,14 +1289,14 @@ out.z = lin_to_SLog3(lin_SG3C.z);
 return out;
 }
 
-__DEVICE__ inline float normalizedLogCToRelativeExposure(float x) {
+__DEVICE__ float normalizedLogCToRelativeExposure(float x) {
 if (x > 0.149659f)
 return (_exp10f((x - 0.385537f) / 0.247189f) - 0.052272f) / 5.555556f;
 else
 return (x - 0.092809f) / 5.367650f;
 }
 
-__DEVICE__ inline float3 IDT_Alexa_v3_logC_EI800( float3 Alexa) {
+__DEVICE__ float3 IDT_Alexa_v3_logC_EI800( float3 Alexa) {
 float r_lin = normalizedLogCToRelativeExposure(Alexa.x);
 float g_lin = normalizedLogCToRelativeExposure(Alexa.y);
 float b_lin = normalizedLogCToRelativeExposure(Alexa.z);
@@ -1397,7 +1307,7 @@ aces.z = r_lin * 0.002057f + g_lin * -0.062563f + b_lin * 1.060506f;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Alexa_v3_raw_EI800_CCT6500( float3 In) {
+__DEVICE__ float3 IDT_Alexa_v3_raw_EI800_CCT6500( float3 In) {
 float black = 256.0f / 65535.0f;
 float r_lin = (In.x - black);
 float g_lin = (In.y - black);
@@ -1409,7 +1319,7 @@ aces.z = r_lin * 0.044166f + g_lin * -0.272038f + b_lin * 1.227872f;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Panasonic_V35( float3 VLog) {
+__DEVICE__ float3 IDT_Panasonic_V35( float3 VLog) {
 mat3 mat = { {0.724382758f, 0.166748484f, 0.108497411f}, {0.021354009f, 0.985138372f, -0.006319092f}, {-0.009234278f, -0.00104295f, 1.010272625f} };
 float rLin = vLogToLinScene(VLog.x);
 float gLin = vLogToLinScene(VLog.y);
@@ -1421,7 +1331,7 @@ out.z = mat.c2.x * rLin + mat.c2.y * gLin + mat.c2.z * bLin;
 return out;
 }
 
-__DEVICE__ inline float3 IDT_REDWideGamutRGB_Log3G10( float3 log3G10) {
+__DEVICE__ float3 IDT_REDWideGamutRGB_Log3G10( float3 log3G10) {
 float r_lin = Log3G10_to_lin(log3G10.x);
 float g_lin = Log3G10_to_lin(log3G10.y);
 float b_lin = Log3G10_to_lin(log3G10.z);
@@ -1432,7 +1342,7 @@ aces.z = r_lin * -0.073769f + g_lin * -0.314639f + b_lin * 1.388537f;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C100_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C100_A_D55( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1467,7 +1377,7 @@ aces.z = 0.084812961f * lin.x + 0.006373835f * lin.y + 0.908813204f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C100_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C100_A_Tng( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1502,7 +1412,7 @@ aces.z = 0.073013542f * lin.x - 0.066540862f * lin.y + 0.99352732f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C100mk2_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C100mk2_A_D55( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1537,7 +1447,7 @@ aces.z = 0.084812961f * lin.x + 0.006373835f * lin.y + 0.908813204f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C100mk2_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C100mk2_A_Tng( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1572,7 +1482,7 @@ aces.z = 0.073013542f * lin.x - 0.066540862f * lin.y + 0.99352732f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300_A_D55( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1607,7 +1517,7 @@ aces.z = 0.084812961f * lin.x + 0.006373835f * lin.y + 0.908813204 * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300_A_Tng( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1642,7 +1552,7 @@ aces.z = 0.073013542f * lin.x -0.066540862f * lin.y + 0.99352732f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_A_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1658,7 +1568,7 @@ aces.z = 0.084812961f * lin.x +0.006373835f * lin.y + 0.908813204f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_A_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1674,7 +1584,7 @@ aces.z = 0.073013542f * lin.x -0.066540862f * lin.y + 0.99352732f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_B_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_B_D55( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1709,7 +1619,7 @@ aces.z = 0.084812961f * lin.x + 0.006373835f * lin.y + 0.908813204f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_B_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_B_Tng( float3 In) {
 float iR, iG, iB;
 iR = (In.x * 1023.0f - 64.0f) / 876.0f;
 iG = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1744,7 +1654,7 @@ aces.z = 0.073013542f * lin.x -0.066540862f * lin.y + 0.99352732f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_CinemaGamut_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_CinemaGamut_A_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1760,7 +1670,7 @@ aces.z = -0.009407794f * lin.x - 0.218383305f * lin.y + 1.227791099f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_CinemaGamut_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_CinemaGamut_A_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1776,7 +1686,7 @@ aces.z = 0.010390366f * lin.x - 0.299271107f * lin.y + 1.288880741f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_DCI_P3_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_DCI_P3_A_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1792,7 +1702,7 @@ aces.z = -0.007839939f * lin.x + 0.000809127f * lin.y + 1.007030813f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C500_DCI_P3_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C500_DCI_P3_A_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1808,7 +1718,7 @@ aces.z = 0.007757558f * lin.x - 0.063081669f * lin.y + 1.055324110f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog_BT2020_D_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog_BT2020_D_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1824,7 +1734,7 @@ aces.z = -0.000485710f * lin.x + 0.025060196f * lin.y + 0.975425515f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog_BT2020_D_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog_BT2020_D_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1840,7 +1750,7 @@ aces.z = 0.014560161f * lin.x - 0.028562057f * lin.y + 1.014001897f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1856,7 +1766,7 @@ aces.z = -0.009407794f * lin.x - 0.218383305f * lin.y + 1.227791099f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog_CinemaGamut_C_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1872,7 +1782,7 @@ aces.z = 0.010390366f * lin.x - 0.299271107f * lin.y + 1.288880741f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog2_BT2020_B_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog2_BT2020_B_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1888,7 +1798,7 @@ aces.z = -0.000485710f * lin.x + 0.025060196f * lin.y + 0.975425515f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog2_BT2020_B_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog2_BT2020_B_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1904,7 +1814,7 @@ aces.z = 0.014560161f * lin.x - 0.028562057f * lin.y + 1.014001897f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1920,7 +1830,7 @@ aces.z = -0.009407794f * lin.x - 0.218383305f * lin.y + 1.227791099f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog2_CinemaGamut_A_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1936,7 +1846,7 @@ aces.z = 0.010390366f * lin.x - 0.299271107f * lin.y + 1.288880741f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog3_BT2020_F_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog3_BT2020_F_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1952,7 +1862,7 @@ aces.z = -0.000485710f * lin.x + 0.025060196f * lin.y + 0.975425515f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog3_BT2020_F_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog3_BT2020_F_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1968,7 +1878,7 @@ aces.z = 0.014560161f * lin.x - 0.028562057f * lin.y + 1.014001897f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_D55( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_D55( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -1984,7 +1894,7 @@ aces.z = -0.009407794f * lin.x - 0.218383305f * lin.y + 1.227791099f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_Tng( float3 In) {
+__DEVICE__ float3 IDT_Canon_C300mk2_CanonLog3_CinemaGamut_E_Tng( float3 In) {
 float3 CLogIRE;
 CLogIRE.x = (In.x * 1023.0f - 64.0f) / 876.0f;
 CLogIRE.y = (In.y * 1023.0f - 64.0f) / 876.0f;
@@ -2000,7 +1910,7 @@ aces.z = 0.010390366f * lin.x - 0.299271107f * lin.y + 1.288880741f * lin.z;
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog1_SGamut( float3 In) {
+__DEVICE__ float3 IDT_Sony_SLog1_SGamut( float3 In) {
 mat3 SGAMUT_TO_ACES_MTX = { {0.754338638f, 0.021198141f, -0.009756991f}, {0.133697046f, 1.005410934f, 0.004508563f}, {0.111968437f, -0.026610548f, 1.005253201f} };
 float B = 64.0f;
 float AB = 90.0f;
@@ -2017,7 +1927,7 @@ float3 aces = mult_f3_f33( lin, SGAMUT_TO_ACES_MTX);
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog2_SGamut_Daylight( float3 In) {
+__DEVICE__ float3 IDT_Sony_SLog2_SGamut_Daylight( float3 In) {
 mat3 SGAMUT_DAYLIGHT_TO_ACES_MTX = { {0.8764457030f, 0.0774075345f, 0.0573564351f}, {0.0145411681f, 0.9529571767f, -0.1151066335f}, {0.1090131290f, -0.0303647111f, 1.0577501984f} };
 float B = 64.0f;
 float AB = 90.0f;
@@ -2034,7 +1944,7 @@ float3 aces = mult_f3_f33( lin, SGAMUT_DAYLIGHT_TO_ACES_MTX);
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog2_SGamut_Tungsten( float3 In) {
+__DEVICE__ float3 IDT_Sony_SLog2_SGamut_Tungsten( float3 In) {
 mat3 SGAMUT_TUNG_TO_ACES_MTX = { { 1.0110238740f, 0.1011994504f, 0.0600766530f}, { -0.1362526051f, 0.9562196265f, -0.1010185315f}, { 0.1252287310f, -0.0574190769f, 1.0409418785f} };
 float B = 64.0f;
 float AB = 90.0f;
@@ -2051,7 +1961,7 @@ float3 aces = mult_f3_f33( lin, SGAMUT_TUNG_TO_ACES_MTX);
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog2_SGamut3Cine( float3 SLog2) {
+__DEVICE__ float3 IDT_Sony_SLog2_SGamut3Cine( float3 SLog2) {
 mat3 matrixCoef = { {0.6387886672f, -0.0039159060f, -0.0299072021f}, {0.2723514337f, 1.0880732309f, -0.0264325799f}, {0.0888598991f, -0.0841573249f, 1.0563397820f} };
 float B = 64.0f;
 float AB = 90.0f;
@@ -2068,7 +1978,7 @@ float3 aces = mult_f3_f33( linear, matrixCoef );
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog3_SGamut3( float3 SLog3) {
+__DEVICE__ float3 IDT_Sony_SLog3_SGamut3( float3 SLog3) {
 mat3 matrixCoef = { {0.7529825954f, 0.0217076974f, -0.0094160528f}, {0.1433702162f, 1.0153188355f, 0.0033704179f}, {0.1036471884f, -0.0370265329f, 1.0060456349f} };
 float3 linear;
 linear.x = SLog3_to_lin( SLog3.x );
@@ -2078,7 +1988,7 @@ float3 aces = mult_f3_f33( linear, matrixCoef );
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_SLog3_SGamut3Cine( float3 SLog3) {
+__DEVICE__ float3 IDT_Sony_SLog3_SGamut3Cine( float3 SLog3) {
 mat3 matrixCoef = { {0.6387886672f, -0.0039159060f, -0.0299072021f}, {0.2723514337f, 1.0880732309f, -0.0264325799f}, {0.0888598991f, -0.0841573249f, 1.0563397820f} };
 float3 linear;
 linear.x = SLog3_to_lin( SLog3.x );
@@ -2088,39 +1998,39 @@ float3 aces = mult_f3_f33( linear, matrixCoef );
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_Venice_SGamut3( float3 linear) {
+__DEVICE__ float3 IDT_Sony_Venice_SGamut3( float3 linear) {
 mat3 matrixCoeff = { {0.7933297411f, 0.0155810585f, -0.0188647478f}, {0.0890786256f, 1.0327123069f, 0.0127694121f}, {0.1175916333f, -0.0482933654f, 1.0060953358f} };
 float3 aces = mult_f3_f33(linear, matrixCoeff);
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Sony_Venice_SGamut3Cine( float3 linear) {
+__DEVICE__ float3 IDT_Sony_Venice_SGamut3Cine( float3 linear) {
 mat3 matrixCoeff = { {0.6742570921f, -0.0093136061f, -0.0382090673f}, {0.2205717359f, 1.1059588614f, -0.0179383766f}, {0.1051711720f, -0.0966452553f, 1.0561474439f} };
 float3 aces = mult_f3_f33(linear, matrixCoeff );
 return aces;
 }
 
-__DEVICE__ inline float Y_2_linCV( float Y, float Ymax, float Ymin) {
+__DEVICE__ float Y_2_linCV( float Y, float Ymax, float Ymin) {
 return (Y - Ymin) / (Ymax - Ymin);
 }
 
-__DEVICE__ inline float linCV_2_Y( float linCV, float Ymax, float Ymin) {
+__DEVICE__ float linCV_2_Y( float linCV, float Ymax, float Ymin) {
 return linCV * (Ymax - Ymin) + Ymin;
 }
 
-__DEVICE__ inline float3 Y_2_linCV_f3( float3 Y, float Ymax, float Ymin) {
+__DEVICE__ float3 Y_2_linCV_f3( float3 Y, float Ymax, float Ymin) {
 float3 linCV;
 linCV.x = Y_2_linCV( Y.x, Ymax, Ymin); linCV.y = Y_2_linCV( Y.y, Ymax, Ymin); linCV.z = Y_2_linCV( Y.z, Ymax, Ymin);
 return linCV;
 }
 
-__DEVICE__ inline float3 linCV_2_Y_f3( float3 linCV, float Ymax, float Ymin) {
+__DEVICE__ float3 linCV_2_Y_f3( float3 linCV, float Ymax, float Ymin) {
 float3 Y;
 Y.x = linCV_2_Y( linCV.x, Ymax, Ymin); Y.y = linCV_2_Y( linCV.y, Ymax, Ymin); Y.z = linCV_2_Y( linCV.z, Ymax, Ymin);
 return Y;
 }
 
-__DEVICE__ inline float3 darkSurround_to_dimSurround( float3 linearCV) {
+__DEVICE__ float3 darkSurround_to_dimSurround( float3 linearCV) {
 float3 XYZ = mult_f3_f33( linearCV, RGBtoXYZ( AP1));
 float3 xyY = XYZ_2_xyY(XYZ);
 xyY.z = _fmaxf( xyY.z, 0.0f);
@@ -2129,7 +2039,7 @@ XYZ = xyY_2_XYZ(xyY);
 return mult_f3_f33( XYZ, XYZtoRGB( AP1));
 }
 
-__DEVICE__ inline float3 dimSurround_to_darkSurround( float3 linearCV) {
+__DEVICE__ float3 dimSurround_to_darkSurround( float3 linearCV) {
 float3 XYZ = mult_f3_f33( linearCV, RGBtoXYZ( AP1));
 float3 xyY = XYZ_2_xyY(XYZ);
 xyY.z = _fmaxf( xyY.z, 0.0f);
@@ -2138,7 +2048,7 @@ XYZ = xyY_2_XYZ(xyY);
 return mult_f3_f33( XYZ, XYZtoRGB( AP1));
 }
 
-__DEVICE__ inline float roll_white_fwd( float in, float new_wht, float width) {
+__DEVICE__ float roll_white_fwd( float in, float new_wht, float width) {
 const float x0 = -1.0f;
 const float x1 = x0 + width;
 const float y0 = -new_wht;
@@ -2158,7 +2068,7 @@ out = -(( t * a + b) * t + c);
 return out;
 }
 
-__DEVICE__ inline float roll_white_rev( float in, float new_wht, float width) {
+__DEVICE__ float roll_white_rev( float in, float new_wht, float width) {
 const float x0 = -1.0f;
 const float x1 = x0 + width;
 const float y0 = -new_wht;
@@ -2181,17 +2091,17 @@ out = -(( t * ( x1 - x0)) + x0);
 return out;
 }
 
-__DEVICE__ inline float lookup_ACESmin( float minLum ) {
+__DEVICE__ float lookup_ACESmin( float minLum ) {
 float2 minTable[2] = { { _log10f(MIN_LUM_RRT), MIN_STOP_RRT }, { _log10f(MIN_LUM_SDR), MIN_STOP_SDR } };
 return 0.18f * _exp2f(interpolate1D( minTable, 2, _log10f( minLum)));
 }
 
-__DEVICE__ inline float lookup_ACESmax( float maxLum ) {
+__DEVICE__ float lookup_ACESmax( float maxLum ) {
 float2 maxTable[2] = { { _log10f(MAX_LUM_SDR), MAX_STOP_SDR }, { _log10f(MAX_LUM_RRT), MAX_STOP_RRT } };
 return 0.18f * _exp2f(interpolate1D( maxTable, 2, _log10f( maxLum)));
 }
 
-__DEVICE__ inline float5 init_coefsLow( TsPoint TsPointLow, TsPoint TsPointMid) {
+__DEVICE__ float5 init_coefsLow( TsPoint TsPointLow, TsPoint TsPointMid) {
 float5 coefsLow;
 float knotIncLow = (_log10f(TsPointMid.x) - _log10f(TsPointLow.x)) / 3.0f;
 coefsLow.x = (TsPointLow.slope * (_log10f(TsPointLow.x) - 0.5f * knotIncLow)) + ( _log10f(TsPointLow.y) - TsPointLow.slope * _log10f(TsPointLow.x));
@@ -2204,7 +2114,7 @@ coefsLow.z = _log10f(TsPointLow.y) + pctLow*(_log10f(TsPointMid.y) - _log10f(TsP
 return coefsLow;
 }
 
-__DEVICE__ inline float5 init_coefsHigh( TsPoint TsPointMid, TsPoint TsPointMax) {
+__DEVICE__ float5 init_coefsHigh( TsPoint TsPointMid, TsPoint TsPointMax) {
 float5 coefsHigh;
 float knotIncHigh = (_log10f(TsPointMax.x) - _log10f(TsPointMid.x)) / 3.0f;
 coefsHigh.x = (TsPointMid.slope * (_log10f(TsPointMid.x) - 0.5f * knotIncHigh)) + ( _log10f(TsPointMid.y) - TsPointMid.slope * _log10f(TsPointMid.x));
@@ -2217,11 +2127,11 @@ coefsHigh.z = _log10f(TsPointMid.y) + pctHigh*(_log10f(TsPointMax.y) - _log10f(T
 return coefsHigh;
 }
 
-__DEVICE__ inline float shift( float in, float expShift) {
+__DEVICE__ float shift( float in, float expShift) {
 return _exp2f((_log2f(in) - expShift));
 }
 
-__DEVICE__ inline TsParams init_TsParams( float minLum, float maxLum, float expShift) {
+__DEVICE__ TsParams init_TsParams( float minLum, float maxLum, float expShift) {
 TsPoint MIN_PT = { lookup_ACESmin(minLum), minLum, 0.0f};
 TsPoint MID_PT = { 0.18f, 4.8f, 1.55f};
 TsPoint MAX_PT = { lookup_ACESmax(maxLum), maxLum, 0.0f};
@@ -2238,7 +2148,7 @@ TsParams P = { {MIN_PT.x, MIN_PT.y, MIN_PT.slope}, {MID_PT.x, MID_PT.y, MID_PT.s
 return P;
 }
 
-__DEVICE__ inline float ssts( float x, TsParams C) {
+__DEVICE__ float ssts( float x, TsParams C) {
 const int N_KNOTS_LOW = 4;
 const int N_KNOTS_HIGH = 4;
 float logx = _log10f( _fmaxf(x, 1e-10f));
@@ -2265,7 +2175,7 @@ logy = logx * C.Max.slope + ( _log10f(C.Max.y) - C.Max.slope * _log10f(C.Max.x) 
 return _exp10f(logy);
 }
 
-__DEVICE__ inline float inv_ssts( float y, TsParams C) {
+__DEVICE__ float inv_ssts( float y, TsParams C) {
 const int N_KNOTS_LOW = 4;
 const int N_KNOTS_HIGH = 4;
 const float KNOT_INC_LOW = (_log10f(C.Mid.x) - _log10f(C.Min.x)) / (N_KNOTS_LOW - 1.0f);
@@ -2320,19 +2230,19 @@ logx = _log10f(C.Max.x);
 return _exp10f( logx);
 }
 
-__DEVICE__ inline float3 ssts_f3( float3 x, TsParams C) {
+__DEVICE__ float3 ssts_f3( float3 x, TsParams C) {
 float3 out;
 out.x = ssts( x.x, C); out.y = ssts( x.y, C); out.z = ssts( x.z, C);
 return out;
 }
 
-__DEVICE__ inline float3 inv_ssts_f3( float3 x, TsParams C) {
+__DEVICE__ float3 inv_ssts_f3( float3 x, TsParams C) {
 float3 out;
 out.x = inv_ssts( x.x, C); out.y = inv_ssts( x.y, C); out.z = inv_ssts( x.z, C);
 return out;
 }
 
-__DEVICE__ inline float glow_fwd( float ycIn, float glowGainIn, float glowMid) {
+__DEVICE__ float glow_fwd( float ycIn, float glowGainIn, float glowMid) {
 float glowGainOut;
 if (ycIn <= 2.0f/3.0f * glowMid) {
 glowGainOut = glowGainIn;
@@ -2344,7 +2254,7 @@ glowGainOut = glowGainIn * (glowMid / ycIn - 1.0f/2.0f);
 return glowGainOut;
 }
 
-__DEVICE__ inline float glow_inv( float ycOut, float glowGainIn, float glowMid) {
+__DEVICE__ float glow_inv( float ycOut, float glowGainIn, float glowMid) {
 float glowGainOut;
 if (ycOut <= ((1.0f + glowGainIn) * 2.0f/3.0f * glowMid)) {
 glowGainOut = -glowGainIn / (1.0f + glowGainIn);
@@ -2356,13 +2266,13 @@ glowGainOut = glowGainIn * (glowMid / ycOut - 1.0f/2.0f) / (glowGainIn / 2.0f - 
 return glowGainOut;
 }
 
-__DEVICE__ inline float sigmoid_shaper( float x) {
+__DEVICE__ float sigmoid_shaper( float x) {
 float t = _fmaxf( 1.0f - _fabs( x / 2.0f), 0.0f);
 float y = 1.0f + _sign(x) * (1.0f - t * t);
 return y / 2.0f;
 }
 
-__DEVICE__ inline float cubic_basis_shaper ( float x, float w) {
+__DEVICE__ float cubic_basis_shaper ( float x, float w) {
 float M[4][4] = { {-1.0f/6.0f, 3.0f/6.0f,-3.0f/6.0f, 1.0f/6.0f}, {3.0f/6.0f, -6.0f/6.0f, 3.0f/6.0f, 0.0f/6.0f},
 {-3.0f/6.0f, 0.0f/6.0f, 3.0f/6.0f, 0.0f/6.0f}, {1.0f/6.0f, 4.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f} };
 float knots[5] = { -w/2.0f, -w/4.0f, 0.0f, w/4.0f, w/2.0f };
@@ -2389,21 +2299,21 @@ y = 0.0f;}}
 return y * 3.0f/2.0f;
 }
 
-__DEVICE__ inline float center_hue( float hue, float centerH) {
+__DEVICE__ float center_hue( float hue, float centerH) {
 float hueCentered = hue - centerH;
 if (hueCentered < -180.0f) hueCentered = hueCentered + 360.0f;
 else if (hueCentered > 180.0f) hueCentered = hueCentered - 360.0f;
 return hueCentered;
 }
 
-__DEVICE__ inline float uncenter_hue( float hueCentered, float centerH) {
+__DEVICE__ float uncenter_hue( float hueCentered, float centerH) {
 float hue = hueCentered + centerH;
 if (hue < 0.0f) hue = hue + 360.0f;
 else if (hue > 360.0f) hue = hue - 360.0f;
 return hue;
 }
 
-__DEVICE__ inline float3 rrt_sweeteners( float3 in) {
+__DEVICE__ float3 rrt_sweeteners( float3 in) {
 float3 aces = in;
 float saturation = rgb_2_saturation( aces);
 float ycIn = rgb_2_yc(aces, 1.75f);
@@ -2421,7 +2331,7 @@ rgbPre = mult_f3_f33( rgbPre, calc_sat_adjust_matrix( RRT_SAT_FACTOR, make_float
 return rgbPre;
 }
 
-__DEVICE__ inline float3 inv_rrt_sweeteners( float3 in) {
+__DEVICE__ float3 inv_rrt_sweeteners( float3 in) {
 float3 rgbPost = in;
 rgbPost = mult_f3_f33( rgbPost, invert_f33(calc_sat_adjust_matrix( RRT_SAT_FACTOR, make_float3(RGBtoXYZ( AP1).c0.y, RGBtoXYZ( AP1).c1.y, RGBtoXYZ( AP1).c2.y))));
 rgbPost = max_f3_f( rgbPost, 0.0f);
@@ -2448,7 +2358,7 @@ aces = mult_f_f3( ( reducedGlow), aces);
 return aces;
 }
 
-__DEVICE__ inline float3 limit_to_primaries( float3 XYZ, Chromaticities LIMITING_PRI) {
+__DEVICE__ float3 limit_to_primaries( float3 XYZ, Chromaticities LIMITING_PRI) {
 mat3 XYZ_2_LIMITING_PRI_MAT = XYZtoRGB( LIMITING_PRI);
 mat3 LIMITING_PRI_2_XYZ_MAT = RGBtoXYZ( LIMITING_PRI);
 float3 rgb = mult_f3_f33( XYZ, XYZ_2_LIMITING_PRI_MAT);
@@ -2456,21 +2366,21 @@ float3 limitedRgb = clamp_f3( rgb, 0.0f, 1.0f);
 return mult_f3_f33( limitedRgb, LIMITING_PRI_2_XYZ_MAT);
 }
 
-__DEVICE__ inline float3 dark_to_dim( float3 XYZ) {
+__DEVICE__ float3 dark_to_dim( float3 XYZ) {
 float3 xyY = XYZ_2_xyY(XYZ);
 xyY.z = _fmaxf( xyY.z, 0.0f);
 xyY.z = _powf( xyY.z, DIM_SURROUND_GAMMA);
 return xyY_2_XYZ(xyY);
 }
 
-__DEVICE__ inline float3 dim_to_dark( float3 XYZ) {
+__DEVICE__ float3 dim_to_dark( float3 XYZ) {
 float3 xyY = XYZ_2_xyY(XYZ);
 xyY.z = _fmaxf( xyY.z, 0.0f);
 xyY.z = _powf( xyY.z, 1.0f / DIM_SURROUND_GAMMA);
 return xyY_2_XYZ(xyY);
 }
 
-__DEVICE__ inline float3 outputTransform (
+__DEVICE__ float3 outputTransform (
 float3 in,
 float Y_MIN,
 float Y_MID,
@@ -2546,7 +2456,7 @@ outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 invOutputTransform (
+__DEVICE__ float3 invOutputTransform (
 float3 in,
 float Y_MIN,
 float Y_MID,
@@ -2619,7 +2529,7 @@ float3 aces = inv_rrt_sweeteners( rgbPre);
 return aces;
 }
 
-__DEVICE__ inline float3 InvODT_Rec709( float3 outputCV) {
+__DEVICE__ float3 InvODT_Rec709( float3 outputCV) {
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(REC709_PRI);
 float DISPGAMMA = 2.4f;
 float L_W = 1.0f;
@@ -2636,7 +2546,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_sRGB( float3 outputCV) {
+__DEVICE__ float3 InvODT_sRGB( float3 outputCV) {
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(REC709_PRI);
 float DISPGAMMA = 2.4f;
 float OFFSET = 0.055f;
@@ -2653,7 +2563,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 IDT_sRGB( float3 rgb) {
+__DEVICE__ float3 IDT_sRGB( float3 rgb) {
 float3 aces;
 aces = InvODT_sRGB(rgb);
 aces = segmented_spline_c5_rev_f3( aces);
@@ -2661,7 +2571,7 @@ aces = max_f3_f(aces, 0.0f);
 return aces;
 }
 
-__DEVICE__ inline float3 IDT_Rec709( float3 rgb) {
+__DEVICE__ float3 IDT_Rec709( float3 rgb) {
 float3 aces;
 aces = InvODT_Rec709(rgb);
 aces = segmented_spline_c5_rev_f3( aces);
@@ -2669,7 +2579,7 @@ aces = max_f3_f(aces, 0.0f);
 return aces;
 }
 
-__DEVICE__ inline float3 ASCCDL_inACEScct ( float3 acesIn, float3 SLOPE, float3 OFFSET, float3 POWER, float SAT) {
+__DEVICE__ float3 ASCCDL_inACEScct ( float3 acesIn, float3 SLOPE, float3 OFFSET, float3 POWER, float SAT) {
 float3 acescct = ACES_to_ACEScct( acesIn);
 acescct.x = _powf( _clampf( (acescct.x * SLOPE.x) + OFFSET.x, 0.0f, 1.0f), 1.0f / POWER.x);
 acescct.y = _powf( _clampf( (acescct.y * SLOPE.y) + OFFSET.y, 0.0f, 1.0f), 1.0f / POWER.y);
@@ -2682,7 +2592,7 @@ acescct.z = luma + satClamp * (acescct.z - luma);
 return ACEScct_to_ACES( acescct);
 }
 
-__DEVICE__ inline float3 gamma_adjust_linear( float3 rgbIn, float GAMMA, float PIVOT) {
+__DEVICE__ float3 gamma_adjust_linear( float3 rgbIn, float GAMMA, float PIVOT) {
 const float SCALAR = PIVOT / _powf( PIVOT, GAMMA);
 float3 rgbOut = rgbIn;
 if (rgbIn.x > 0.0f) rgbOut.x = _powf( rgbIn.x, GAMMA) * SCALAR;
@@ -2691,23 +2601,23 @@ if (rgbIn.z > 0.0f) rgbOut.z = _powf( rgbIn.z, GAMMA) * SCALAR;
 return rgbOut;
 }
 
-__DEVICE__ inline float3 sat_adjust( float3 rgbIn, float SAT_FACTOR) {
+__DEVICE__ float3 sat_adjust( float3 rgbIn, float SAT_FACTOR) {
 float3 RGB2Y = make_float3(RGBtoXYZ( REC709_PRI).c0.y, RGBtoXYZ( REC709_PRI).c1.y, RGBtoXYZ( REC709_PRI).c2.y);
 const mat3 SAT_MAT = calc_sat_adjust_matrix( SAT_FACTOR, RGB2Y);
 return mult_f3_f33( rgbIn, SAT_MAT);
 }
 
-__DEVICE__ inline float3 rgb_2_yab( float3 rgb) {
+__DEVICE__ float3 rgb_2_yab( float3 rgb) {
 float3 yab = mult_f3_f33( rgb, make_mat3(make_float3(1.0f/3.0f, 1.0f/2.0f, 0.0f), make_float3(1.0f/3.0f, -1.0f/4.0f, sqrt3over4), make_float3(1.0f/3.0f, -1.0f/4.0f, -sqrt3over4)));
 return yab;
 }
 
-__DEVICE__ inline float3 yab_2_rgb( float3 yab) {
+__DEVICE__ float3 yab_2_rgb( float3 yab) {
 float3 rgb = mult_f3_f33( yab, invert_f33(make_mat3(make_float3(1.0f/3.0f, 1.0f/2.0f, 0.0f), make_float3(1.0f/3.0f, -1.0f/4.0f, sqrt3over4), make_float3(1.0f/3.0f, -1.0f/4.0f, -sqrt3over4))));
 return rgb;
 }
 
-__DEVICE__ inline float3 yab_2_ych(float3 yab) {
+__DEVICE__ float3 yab_2_ych(float3 yab) {
 float3 ych = yab;
 float yo = yab.y * yab.y + yab.z * yab.z;
 ych.y = _sqrtf(yo);
@@ -2716,7 +2626,7 @@ if (ych.z < 0.0f) ych.z += 360.0f;
 return ych;
 }
 
-__DEVICE__ inline float3 ych_2_yab( float3 ych ) {
+__DEVICE__ float3 ych_2_yab( float3 ych ) {
 float3 yab;
 yab.x = ych.x;
 float h = ych.z * (3.141592653589793f / 180.0f);
@@ -2725,15 +2635,15 @@ yab.z = ych.y * _sinf(h);
 return yab;
 }
 
-__DEVICE__ inline float3 rgb_2_ych( float3 rgb) {
+__DEVICE__ float3 rgb_2_ych( float3 rgb) {
 return yab_2_ych( rgb_2_yab( rgb));
 }
 
-__DEVICE__ inline float3 ych_2_rgb( float3 ych) {
+__DEVICE__ float3 ych_2_rgb( float3 ych) {
 return yab_2_rgb( ych_2_yab( ych));
 }
 
-__DEVICE__ inline float3 scale_C_at_H( float3 rgb, float centerH, float widthH, float percentC) {
+__DEVICE__ float3 scale_C_at_H( float3 rgb, float centerH, float widthH, float percentC) {
 float3 new_rgb = rgb;
 float3 ych = rgb_2_ych( rgb);
 if (ych.y > 0.0f) {
@@ -2749,7 +2659,7 @@ new_rgb = rgb;
 return new_rgb;
 }
 
-__DEVICE__ inline float3 rotate_H_in_H( float3 rgb, float centerH, float widthH, float degreesShift) {
+__DEVICE__ float3 rotate_H_in_H( float3 rgb, float centerH, float widthH, float degreesShift) {
 float3 ych = rgb_2_ych( rgb);
 float3 new_ych = ych;
 float centeredHue = center_hue( ych.z, centerH);
@@ -2762,13 +2672,13 @@ if (f_H > 0.0f) new_ych.z = uncenter_hue(blended_hue, centerH);
 return ych_2_rgb( new_ych);
 }
 
-__DEVICE__ inline float3 scale_C( float3 rgb, float percentC) {
+__DEVICE__ float3 scale_C( float3 rgb, float percentC) {
 float3 ych = rgb_2_ych( rgb);
 ych.y = ych.y * percentC;
 return ych_2_rgb( ych);
 }
 
-__DEVICE__ inline float3 overlay_f3( float3 a, float3 b) {
+__DEVICE__ float3 overlay_f3( float3 a, float3 b) {
 const float LUMA_CUT = lin_to_ACEScct( 0.5f);
 float luma = 0.2126f * a.x + 0.7152f * a.y + 0.0722f * a.z;
 float3 out;
@@ -2784,7 +2694,7 @@ out.z = 1.0f - (2.0f * (1.0f - a.z) * (1.0f - b.z));
 return out;
 }
 
-__DEVICE__ inline float3 LMT_PFE( float3 aces) {
+__DEVICE__ float3 LMT_PFE( float3 aces) {
 aces = scale_C( aces, 0.7f);
 float3 SLOPE = make_float3(1.0f, 1.0f, 0.94f);
 float3 OFFSET = make_float3(0.0f, 0.0f, 0.02f);
@@ -2800,7 +2710,7 @@ aces = scale_C_at_H( aces, 240.0f, 120.0f, 1.4f);
 return aces;
 }
 
-__DEVICE__ inline float3 LMT_Bleach( float3 aces) {
+__DEVICE__ float3 LMT_Bleach( float3 aces) {
 float3 a, b, blend;
 a = sat_adjust( aces, 0.9f);
 a = mult_f_f3( 2.0f, a);
@@ -2813,7 +2723,7 @@ aces = ACEScct_to_ACES( blend);
 return aces;
 }
 
-__DEVICE__ inline float3 LMT_BlueLightArtifactFix( float3 aces) {
+__DEVICE__ float3 LMT_BlueLightArtifactFix( float3 aces) {
 mat3 correctionMatrix =
 { {0.9404372683f, 0.0083786969f, 0.0005471261f },
 {-0.0183068787f, 0.8286599939f, -0.0008833746f },
@@ -2822,7 +2732,7 @@ float3 acesMod = mult_f3_f33( aces, correctionMatrix);
 return acesMod;
 }
 
-__DEVICE__ inline float3 RRT( float3 aces) {
+__DEVICE__ float3 RRT( float3 aces) {
 float saturation = rgb_2_saturation( aces);
 float ycIn = rgb_2_yc(aces, 1.75f);
 float s = sigmoid_shaper( (saturation - 0.4f) / 0.2f);
@@ -2844,7 +2754,7 @@ float3 rgbOces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( A
 return rgbOces;
 }
 
-__DEVICE__ inline float3 InvRRT( float3 oces) {
+__DEVICE__ float3 InvRRT( float3 oces) {
 float3 rgbPre = mult_f3_f33( oces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
 float3 rgbPost;
 rgbPost.x = segmented_spline_c5_rev( rgbPre.x);
@@ -2875,7 +2785,7 @@ aces = mult_f_f3( ( reducedGlow), aces);
 return aces;
 }
 
-__DEVICE__ inline float3 ODT_Rec709_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_Rec709_100nits_dim( float3 oces) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -2905,7 +2815,7 @@ if(legalRange) outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_Rec709_D60sim_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_Rec709_D60sim_100nits_dim( float3 oces) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -2939,7 +2849,7 @@ outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_Rec2020_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_Rec2020_100nits_dim( float3 oces) {
 Chromaticities DISPLAY_PRI = REC2020_PRI;
 mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -2970,7 +2880,7 @@ outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_Rec2020_ST2084_1000nits( float3 oces) {
+__DEVICE__ float3 ODT_Rec2020_ST2084_1000nits( float3 oces) {
 Chromaticities DISPLAY_PRI = REC2020_PRI;
 mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 float3 rgbPre = mult_f3_f33( oces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
@@ -2987,7 +2897,7 @@ float3 outputCV = Y_2_ST2084_f3( rgb);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_Rec2020_Rec709limited_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_Rec2020_Rec709limited_100nits_dim( float3 oces) {
 const Chromaticities DISPLAY_PRI = REC2020_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const Chromaticities LIMITING_PRI = REC709_PRI;
@@ -3020,7 +2930,7 @@ outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_Rec2020_P3D65limited_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_Rec2020_P3D65limited_100nits_dim( float3 oces) {
 const Chromaticities DISPLAY_PRI = REC2020_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const Chromaticities LIMITING_PRI = P3D65_PRI;
@@ -3053,7 +2963,7 @@ outputCV = fullRange_to_smpteRange_f3( outputCV);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_sRGB_D60sim_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_sRGB_D60sim_100nits_dim( float3 oces) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -3083,7 +2993,7 @@ outputCV.z = moncurve_r( linearCV.z, DISPGAMMA, OFFSET);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_sRGB_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_sRGB_100nits_dim( float3 oces) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -3110,7 +3020,7 @@ outputCV.z = moncurve_r( linearCV.z, DISPGAMMA, OFFSET);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3DCI_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3DCI_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3139,7 +3049,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3DCI_D60sim_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3DCI_D60sim_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3169,7 +3079,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3DCI_D65sim_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3DCI_D65sim_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3199,7 +3109,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3D60_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3D60_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3D60_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3219,7 +3129,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3D65_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3D65_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3D65_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3239,7 +3149,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3D65_D60sim_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3D65_D60sim_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3D65_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3263,7 +3173,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_P3D65_Rec709limited_48nits( float3 oces) {
+__DEVICE__ float3 ODT_P3D65_Rec709limited_48nits( float3 oces) {
 const Chromaticities DISPLAY_PRI = P3D65_PRI;
 const mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 const Chromaticities LIMITING_PRI = REC709_PRI;
@@ -3286,7 +3196,7 @@ float3 outputCV = pow_f3( linearCV, 1.0f / DISPGAMMA);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_DCDM( float3 oces) {
+__DEVICE__ float3 ODT_DCDM( float3 oces) {
 float3 rgbPre = mult_f3_f33( oces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
 float3 rgbPost;
 rgbPost.x = segmented_spline_c9_fwd( rgbPre.x, ODT_48nits());
@@ -3302,7 +3212,7 @@ float3 outputCV = dcdm_encode( XYZ);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_DCDM_P3D60limited( float3 oces) {
+__DEVICE__ float3 ODT_DCDM_P3D60limited( float3 oces) {
 const Chromaticities LIMITING_PRI = P3D60_PRI;
 float3 rgbPre = mult_f3_f33( oces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
 float3 rgbPost;
@@ -3319,7 +3229,7 @@ float3 outputCV = dcdm_encode( XYZ);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_DCDM_P3D65limited( float3 oces) {
+__DEVICE__ float3 ODT_DCDM_P3D65limited( float3 oces) {
 const Chromaticities LIMITING_PRI = P3D65_PRI;
 float3 rgbPre = mult_f3_f33( oces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
 float3 rgbPost;
@@ -3336,7 +3246,7 @@ float3 outputCV = dcdm_encode( XYZ);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_RGBmonitor_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_RGBmonitor_100nits_dim( float3 oces) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3363,7 +3273,7 @@ outputCV.z = moncurve_r( linearCV.z, DISPGAMMA, OFFSET);
 return outputCV;
 }
 
-__DEVICE__ inline float3 ODT_RGBmonitor_D60sim_100nits_dim( float3 oces) {
+__DEVICE__ float3 ODT_RGBmonitor_D60sim_100nits_dim( float3 oces) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3393,7 +3303,7 @@ outputCV.z = moncurve_r( linearCV.z, DISPGAMMA, OFFSET);
 return outputCV;
 }
 
-__DEVICE__ inline float3 InvODT_Rec709_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_Rec709_100nits_dim( float3 outputCV) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3423,7 +3333,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_Rec709_D60sim_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_Rec709_D60sim_100nits_dim( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -3456,7 +3366,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_Rec2020_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_Rec2020_100nits_dim( float3 outputCV) {
 Chromaticities DISPLAY_PRI = REC2020_PRI;
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3486,7 +3396,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_Rec2020_ST2084_1000nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_Rec2020_ST2084_1000nits( float3 outputCV) {
 Chromaticities DISPLAY_PRI = REC2020_PRI;
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 float3 rgb = ST2084_2_Y_f3( outputCV);
@@ -3502,7 +3412,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_sRGB_D60sim_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_sRGB_D60sim_100nits_dim( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -3531,7 +3441,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_sRGB_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_sRGB_100nits_dim( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = REC709_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.4f;
@@ -3557,7 +3467,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3DCI_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3DCI_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3582,7 +3492,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3DCI_D60sim_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3DCI_D60sim_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3607,7 +3517,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3DCI_D65sim_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3DCI_D65sim_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3DCI_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3632,7 +3542,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3D60_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3D60_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3D60_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3651,7 +3561,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3D65_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3D65_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3D65_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3670,7 +3580,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_P3D65_D60sim_48nits( float3 outputCV) {
+__DEVICE__ float3 InvODT_P3D65_D60sim_48nits( float3 outputCV) {
 const Chromaticities DISPLAY_PRI = P3D65_PRI;
 const mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ( DISPLAY_PRI);
 const float DISPGAMMA = 2.6f;
@@ -3693,7 +3603,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_DCDM( float3 outputCV) {
+__DEVICE__ float3 InvODT_DCDM( float3 outputCV) {
 float3 XYZ = dcdm_decode( outputCV);
 float3 linearCV = mult_f3_f33( XYZ, XYZtoRGB( AP1));
 float3 rgbPre;
@@ -3708,7 +3618,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_DCDM_P3D65limited( float3 outputCV) {
+__DEVICE__ float3 InvODT_DCDM_P3D65limited( float3 outputCV) {
 float3 XYZ = dcdm_decode( outputCV);
 XYZ = mult_f3_f33( XYZ, invert_f33(calculate_cat_matrix( AP0.white, REC709_PRI.white)));
 float3 linearCV = mult_f3_f33( XYZ, XYZtoRGB( AP1));
@@ -3724,7 +3634,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_RGBmonitor_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_RGBmonitor_100nits_dim( float3 outputCV) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3750,7 +3660,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 InvODT_RGBmonitor_D60sim_100nits_dim( float3 outputCV) {
+__DEVICE__ float3 InvODT_RGBmonitor_D60sim_100nits_dim( float3 outputCV) {
 Chromaticities DISPLAY_PRI = REC709_PRI;
 mat3 DISPLAY_PRI_2_XYZ_MAT = RGBtoXYZ(DISPLAY_PRI);
 float DISPGAMMA = 2.4f;
@@ -3779,7 +3689,7 @@ float3 oces = mult_f3_f33( rgbPost, mult_f33_f33( RGBtoXYZ( AP1), XYZtoRGB( AP0)
 return oces;
 }
 
-__DEVICE__ inline float3 RRTODT_P3D65_108nits_7_2nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_P3D65_108nits_7_2nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 7.2f;
 float Y_MAX = 108.0f;
@@ -3795,7 +3705,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_P3D65_1000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_P3D65_1000nits_15nits_ST2084( float3 aces) {
 const float Y_MIN = 0.0001;
 const float Y_MID = 15.0;
 const float Y_MAX = 1000.0;
@@ -3811,7 +3721,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_P3D65_2000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_P3D65_2000nits_15nits_ST2084( float3 aces) {
 const float Y_MIN = 0.0001;
 const float Y_MID = 15.0;
 const float Y_MAX = 2000.0;
@@ -3827,7 +3737,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_P3D65_4000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_P3D65_4000nits_15nits_ST2084( float3 aces) {
 const float Y_MIN = 0.0001;
 const float Y_MID = 15.0;
 const float Y_MAX = 4000.0;
@@ -3843,7 +3753,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec2020_1000nits_15nits_HLG( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec2020_1000nits_15nits_HLG( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
@@ -3859,7 +3769,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec2020_1000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec2020_1000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
@@ -3875,7 +3785,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec2020_2000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec2020_2000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 2000.0f;
@@ -3891,7 +3801,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec2020_4000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec2020_4000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 4000.0f;
@@ -3907,7 +3817,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec709_100nits_10nits_BT1886( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec709_100nits_10nits_BT1886( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 10.0f;
 float Y_MAX = 100.0f;
@@ -3923,7 +3833,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 RRTODT_Rec709_100nits_10nits_sRGB( float3 aces) {
+__DEVICE__ float3 RRTODT_Rec709_100nits_10nits_sRGB( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 10.0f;
 float Y_MAX = 100.0f;
@@ -3939,7 +3849,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_P3D65_108nits_7_2nits_ST2084( float3 aces) {
+__DEVICE__ float3 InvRRTODT_P3D65_108nits_7_2nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 7.2f;
 float Y_MAX = 108.0f;
@@ -3955,7 +3865,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_P3D65_1000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 InvRRTODT_P3D65_1000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
@@ -3971,7 +3881,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_P3D65_2000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 InvRRTODT_P3D65_2000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 2000.0f;
@@ -3987,7 +3897,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_P3D65_4000nits_15nits_ST2084( float3 aces) {
+__DEVICE__ float3 InvRRTODT_P3D65_4000nits_15nits_ST2084( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 4000.0f;
@@ -4003,7 +3913,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec2020_1000nits_15nits_HLG( float3 cv) {
+__DEVICE__ float3 InvRRTODT_Rec2020_1000nits_15nits_HLG( float3 cv) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
@@ -4019,7 +3929,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return aces;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec2020_1000nits_15nits_ST2084( float3 cv) {
+__DEVICE__ float3 InvRRTODT_Rec2020_1000nits_15nits_ST2084( float3 cv) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 1000.0f;
@@ -4035,7 +3945,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return aces;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec2020_2000nits_15nits_ST2084( float3 cv) {
+__DEVICE__ float3 InvRRTODT_Rec2020_2000nits_15nits_ST2084( float3 cv) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 2000.0f;
@@ -4051,7 +3961,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return aces;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec2020_4000nits_15nits_ST2084( float3 cv) {
+__DEVICE__ float3 InvRRTODT_Rec2020_4000nits_15nits_ST2084( float3 cv) {
 float Y_MIN = 0.0001f;
 float Y_MID = 15.0f;
 float Y_MAX = 4000.0f;
@@ -4067,7 +3977,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return aces;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec709_100nits_10nits_BT1886( float3 aces) {
+__DEVICE__ float3 InvRRTODT_Rec709_100nits_10nits_BT1886( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 10.0f;
 float Y_MAX = 100.0f;
@@ -4083,7 +3993,7 @@ LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
 return cv;
 }
 
-__DEVICE__ inline float3 InvRRTODT_Rec709_100nits_10nits_sRGB( float3 aces) {
+__DEVICE__ float3 InvRRTODT_Rec709_100nits_10nits_sRGB( float3 aces) {
 float Y_MIN = 0.0001f;
 float Y_MID = 10.0f;
 float Y_MAX = 100.0f;
