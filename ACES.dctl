@@ -1,4 +1,4 @@
-// ACES 1.2 DCTL
+// ACES 1.3 DCTL
 
 #include "ACES_LIB.h"
 
@@ -9,13 +9,16 @@ float3 aces = make_float3(p_R, p_G, p_B);
 //aces = ACEScc_to_ACES(aces);
 //aces = ACEScct_to_ACES(aces);
 //aces = ACEScg_to_ACES(aces);
-//aces = ACESproxy_to_ACES(aces);
 //aces = ADX_to_ACES(aces);
 //aces = ICpCt_to_ACES(aces);
 //aces = LogC_EI800_AWG_to_ACES(aces);
 //aces = Log3G10_RWG_to_ACES(aces);
 //aces = SLog3_SG3_to_ACES(aces);
 //aces = SLog3_SG3C_to_ACES(aces);
+//aces = Venice_SLog3_SG3_to_ACES(aces);
+//aces = Venice_SLog3_SG3C_to_ACES(aces);
+//aces = VLog_VGamut_to_ACES(aces);
+
 
 //aces = IDT_sRGB(aces);
 //aces = IDT_Rec709(aces);
@@ -60,6 +63,7 @@ float3 aces = make_float3(p_R, p_G, p_B);
 //aces = LMT_PFE(aces);
 //aces = LMT_Bleach(aces);
 //aces = LMT_BlueLightArtifactFix(aces);
+//aces = LMT_GamutCompress(aces);
 
 // Custom LMT
 /*
@@ -81,13 +85,15 @@ aces = scale_C_at_H( aces, 180.0f, 60.0f, 1.0f);
 //aces = ACES_to_ACEScc(aces);
 //aces = ACES_to_ACEScct(aces);
 //aces = ACES_to_ACEScg(aces);
-//aces = ACES_to_ACESproxy(aces);
 //aces = ACES_to_ADX(aces);
 //aces = ACES_to_ICpCt(aces);
 //aces = ACES_to_LogC_EI800_AWG(aces);
 //aces = ACES_to_Log3G10_RWG(aces);
 //aces = ACES_to_SLog3_SG3(aces);
 //aces = ACES_to_SLog3_SG3C(aces);
+//aces = ACES_to_Venice_SLog3_SG3(aces);
+//aces = ACES_to_Venice_SLog3_SG3C(aces);
+//aces = ACES_to_VLog_VGamut(aces);
 
 //aces = RRT(aces);
 //aces = InvRRT(aces);

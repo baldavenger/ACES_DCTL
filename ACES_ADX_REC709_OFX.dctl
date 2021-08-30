@@ -1,0 +1,824 @@
+// ACES ADX TO REC709 OFX DCTL
+
+DEFINE_UI_PARAMS(Exposure, Exposure, DCTLUI_SLIDER_FLOAT, 0, -6, 6, 0.001)
+
+typedef struct {
+float x, y, z, w, m;
+} float5;
+
+typedef struct {
+float3 c0, c1, c2;
+} mat3;
+
+typedef struct {
+float2 red; float2 green; float2 blue; float2 white;
+} Chromaticities;
+
+typedef struct {
+float x; float y; float slope;
+} TsPoint;
+
+typedef struct {
+TsPoint Min; TsPoint Mid; TsPoint Max;
+float coefsLow[6]; float coefsHigh[6];
+} TsParams;
+
+__CONSTANT__ mat3 CDD_TO_CID = 
+{ {0.75573f, 0.05901f, 0.16134f}, {0.22197f, 0.96928f, 0.07406f}, {0.02230f, -0.02829f, 0.76460f} };
+__CONSTANT__ mat3 EXP_TO_ACES = 
+{ {0.72286f, 0.11923f, 0.01427f}, {0.12630f, 0.76418f, 0.08213f}, {0.15084f, 0.11659f, 0.90359f} };
+__CONSTANT__ Chromaticities AP0 =
+{ {0.7347f, 0.2653f}, {0.0f, 1.0f}, {0.0001f, -0.077f}, {0.32168f, 0.33767f} };
+__CONSTANT__ Chromaticities AP1 =
+{ {0.713f, 0.293f}, {0.165f, 0.83f}, {0.128f, 0.044f}, {0.32168f, 0.33767f} };
+__CONSTANT__ Chromaticities REC709_PRI =
+{ {0.64f, 0.33f}, {0.3f, 0.6f}, {0.15f, 0.06f}, {0.3127f, 0.329f} };
+__CONSTANT__ mat3 CONE_RESP_MATRADFORD =
+{ {0.8951f, -0.7502f, 0.0389f}, {0.2664f, 1.7135f, -0.0685f}, {-0.1614f, 0.0367f, 1.0296f} };
+__CONSTANT__ mat3 M1 = { {0.5f, -1.0f, 0.5f}, {-1.0f, 1.0f, 0.5f}, {0.5f, 0.0f, 0.0f} };
+__CONSTANT__ float TINY = 1e-10f;
+__CONSTANT__ float DIM_SURROUND_GAMMA = 0.9811f;
+__CONSTANT__ float ODT_SAT_FACTOR = 0.93f;
+__CONSTANT__ float MIN_STOP_SDR = -6.5f;
+__CONSTANT__ float MAX_STOP_SDR = 6.5f;
+__CONSTANT__ float MIN_STOP_RRT = -15.0f;
+__CONSTANT__ float MAX_STOP_RRT = 18.0f;
+__CONSTANT__ float MIN_LUM_SDR = 0.02f;
+__CONSTANT__ float MAX_LUM_SDR = 48.0f;
+__CONSTANT__ float MIN_LUM_RRT = 0.0001f;
+__CONSTANT__ float MAX_LUM_RRT = 10000.0f;
+__CONSTANT__ float RRT_GLOW_GAIN = 0.05f;
+__CONSTANT__ float RRT_GLOW_MID = 0.08f;
+__CONSTANT__ float RRT_RED_SCALE = 0.82f;
+__CONSTANT__ float RRT_RED_PIVOT = 0.03f;
+__CONSTANT__ float RRT_RED_HUE = 0.0f;
+__CONSTANT__ float RRT_RED_WIDTH = 135.0f;
+__CONSTANT__ float RRT_SAT_FACTOR = 0.96f;
+__CONSTANT__ float X_BRK = 0.0078125f;
+__CONSTANT__ float Y_BRK = 0.155251141552511f;
+__CONSTANT__ float A = 10.5402377416545f;
+__CONSTANT__ float B = 0.0729055341958355f;
+__CONSTANT__ float sqrt3over4 = 0.433012701892219f;
+__CONSTANT__ float pq_m1 = 0.1593017578125f;
+__CONSTANT__ float pq_m2 = 78.84375f;
+__CONSTANT__ float pq_c1 = 0.8359375f;
+__CONSTANT__ float pq_c2 = 18.8515625f;
+__CONSTANT__ float pq_c3 = 18.6875f;
+__CONSTANT__ float pq_C = 10000.0f;
+
+__DEVICE__ float min_f3( float3 a) {
+return _fminf( a.x, _fminf( a.y, a.z));
+}
+
+__DEVICE__ float max_f3( float3 a) {
+return _fmaxf( a.x, _fmaxf( a.y, a.z));
+}
+
+__DEVICE__ float3 clamp_f3( float3 A, float mn, float mx) {
+float3 out;
+out.x = _clampf( A.x, mn, mx); out.y = _clampf( A.y, mn, mx); out.z = _clampf( A.z, mn, mx);
+return out;
+}
+
+__DEVICE__ float3 pow_f3( float3 a, float b) {
+float3 out;
+out.x = _powf(a.x, b); out.y = _powf(a.y, b); out.z = _powf(a.z, b);
+return out;
+}
+
+__DEVICE__ float3 mult_f_f3( float f, float3 x) {
+float3 r;
+r.x = f * x.x; r.y = f * x.y; r.z = f * x.z;
+return r;
+}
+
+__DEVICE__ float3 max_f3_f( float3 a, float b) {
+float3 out;
+out.x =_fmaxf(a.x, b); out.y =_fmaxf(a.y, b); out.z =_fmaxf(a.z, b);
+return out;
+}
+
+__DEVICE__ mat3 make_mat3( float3 A, float3 B, float3 C) {
+mat3 D;
+D.c0 = A; D.c1 = B; D.c2 = C;
+return D;
+}
+
+
+__DEVICE__ mat3 mult_f_f33( float f, mat3 A) {
+float r[3][3];
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+for( int i = 0; i < 3; ++i ){
+for( int j = 0; j < 3; ++j ){
+r[i][j] = f * a[i][j];}}
+mat3 R = make_mat3(make_float3(r[0][0], r[0][1], r[0][2]), make_float3(r[1][0], r[1][1], r[1][2]), make_float3(r[2][0], r[2][1], r[2][2]));
+return R;
+}
+
+__DEVICE__ float3 mult_f3_f33( float3 X, mat3 A) {
+float r[3];
+float x[3] = {X.x, X.y, X.z};
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+for( int i = 0; i < 3; ++i){
+r[i] = 0.0f;
+for( int j = 0; j < 3; ++j){
+r[i] = r[i] + x[j] * a[j][i];}}
+return make_float3(r[0], r[1], r[2]);
+}
+
+__DEVICE__ float _sign( float x) {
+float y;
+if (x < 0.0f) y = -1.0f;
+else if (x > 0.0f) y = 1.0f;
+else y = 0.0f;
+return y;
+}
+
+__DEVICE__ float dot_f3_f3( float3 x, float3 y) {
+return x.x * y.x + x.y * y.y + x.z * y.z;
+}
+
+__DEVICE__ mat3 mult_f33_f33( mat3 A, mat3 B) {
+float r[3][3];
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z},
+{A.c1.x, A.c1.y, A.c1.z},
+{A.c2.x, A.c2.y, A.c2.z}};
+float b[3][3] = {{B.c0.x, B.c0.y, B.c0.z},
+{B.c1.x, B.c1.y, B.c1.z},
+{B.c2.x, B.c2.y, B.c2.z}};
+for( int i = 0; i < 3; ++i){
+for( int j = 0; j < 3; ++j){
+r[i][j] = 0.0f;
+for( int k = 0; k < 3; ++k){
+r[i][j] = r[i][j] + a[i][k] * b[k][j];
+}}}
+mat3 R = make_mat3(make_float3(r[0][0], r[0][1], r[0][2]), make_float3(r[1][0], r[1][1], r[1][2]), make_float3(r[2][0], r[2][1], r[2][2]));
+return R;
+}
+
+__DEVICE__ mat3 invert_f33( mat3 A) {
+mat3 R;
+float result[3][3];
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+float det = a[0][0] * a[1][1] * a[2][2] + a[0][1] * a[1][2] * a[2][0]
++ a[0][2] * a[1][0] * a[2][1] - a[2][0] * a[1][1] * a[0][2]
+- a[2][1] * a[1][2] * a[0][0] - a[2][2] * a[1][0] * a[0][1];
+if( det != 0.0f ){
+result[0][0] = a[1][1] * a[2][2] - a[1][2] * a[2][1]; result[0][1] = a[2][1] * a[0][2] - a[2][2] * a[0][1];
+result[0][2] = a[0][1] * a[1][2] - a[0][2] * a[1][1]; result[1][0] = a[2][0] * a[1][2] - a[1][0] * a[2][2];
+result[1][1] = a[0][0] * a[2][2] - a[2][0] * a[0][2]; result[1][2] = a[1][0] * a[0][2] - a[0][0] * a[1][2];
+result[2][0] = a[1][0] * a[2][1] - a[2][0] * a[1][1]; result[2][1] = a[2][0] * a[0][1] - a[0][0] * a[2][1];
+result[2][2] = a[0][0] * a[1][1] - a[1][0] * a[0][1];
+R = make_mat3(make_float3(result[0][0], result[0][1], result[0][2]), make_float3(result[1][0], result[1][1],
+result[1][2]), make_float3(result[2][0], result[2][1], result[2][2]));
+return mult_f_f33( 1.0f / det, R);
+}
+R = make_mat3(make_float3(1.0f, 0.0f, 0.0f), make_float3(0.0f, 1.0f, 0.0f), make_float3(0.0f, 0.0f, 1.0f));
+return R;
+}
+
+__DEVICE__ mat3 transpose_f33( mat3 A) {
+float r[3][3];
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+for( int i = 0; i < 3; ++i){
+for( int j = 0; j < 3; ++j){
+r[i][j] = a[j][i];}}
+mat3 R = make_mat3(make_float3(r[0][0], r[0][1], r[0][2]), make_float3(r[1][0], r[1][1], r[1][2]), make_float3(r[2][0], r[2][1], r[2][2]));
+return R;
+}
+
+__DEVICE__ float Y_2_ST2084( float C ) {
+float L = C / pq_C;
+float Lm = _powf( L, pq_m1 );
+float N = ( pq_c1 + pq_c2 * Lm ) / ( 1.0f + pq_c3 * Lm );
+N = _powf( N, pq_m2 );
+return N;
+}
+
+__DEVICE__ float3 Y_2_ST2084_f3( float3 in) {
+float3 out;
+out.x = Y_2_ST2084( in.x); 
+out.y = Y_2_ST2084( in.y); 
+out.z = Y_2_ST2084( in.z);
+return out;
+}
+
+__DEVICE__ float bt1886_r( float L, float gamma, float Lw, float Lb) {
+float a = _powf( _powf( Lw, 1.0f/gamma) - _powf( Lb, 1.0f/gamma), gamma);
+float b = _powf( Lb, 1.0f/gamma) / ( _powf( Lw, 1.0f/gamma) - _powf( Lb, 1.0f/gamma));
+float V = _powf( _fmaxf( L / a, 0.0f), 1.0f/gamma) - b;
+return V;
+}
+
+__DEVICE__ float3 bt1886_r_f3( float3 L, float gamma, float Lw, float Lb) {
+float3 V;
+V.x = bt1886_r( L.x, gamma, Lw, Lb); V.y = bt1886_r( L.y, gamma, Lw, Lb); V.z = bt1886_r( L.z, gamma, Lw, Lb);
+return V;
+}
+
+__DEVICE__ float moncurve_r( float y, float gamma, float offs ) {
+float x;
+const float yb = _powf( offs * gamma / ( ( gamma - 1.0f) * ( 1.0f + offs)), gamma);
+const float rs = _powf( ( gamma - 1.0f) / offs, gamma - 1.0f) * _powf( ( 1.0f + offs) / gamma, gamma);
+if ( y >= yb)
+x = ( 1.0f + offs) * _powf( y, 1.0f / gamma) - offs;
+else
+x = y * rs;
+return x;
+}
+
+__DEVICE__ float3 moncurve_r_f3( float3 y, float gamma, float offs) {
+float3 x;
+x.x = moncurve_r( y.x, gamma, offs); 
+x.y = moncurve_r( y.y, gamma, offs); 
+x.z = moncurve_r( y.z, gamma, offs);
+return x;
+}
+
+__DEVICE__ float rgb_2_saturation( float3 rgb) {
+return ( _fmaxf( max_f3(rgb), TINY) - _fmaxf( min_f3(rgb), TINY)) / _fmaxf( max_f3(rgb), 1e-2f);
+}
+
+__DEVICE__ float interpolate1D( float2 table[], int Size, float p) {
+if( p <= table[0].x ) return table[0].y;
+if( p >= table[Size - 1].x ) return table[Size - 1].y;
+for( int i = 0; i < Size - 1; ++i ){
+if( table[i].x <= p && p < table[i + 1].x ){
+float s = (p - table[i].x) / (table[i + 1].x - table[i].x);
+return table[i].y * ( 1.0f - s ) + table[i+1].y * s;}}
+return 0.0f;
+}
+
+__DEVICE__ float3 XYZ_2_xyY( float3 XYZ) {
+float3 xyY;
+float divisor = (XYZ.x + XYZ.y + XYZ.z);
+if (divisor == 0.0f) divisor = 1e-10f;
+xyY.x = XYZ.x / divisor;
+xyY.y = XYZ.y / divisor;
+xyY.z = XYZ.y;
+return xyY;
+}
+
+__DEVICE__ float3 xyY_2_XYZ( float3 xyY) {
+float3 XYZ;
+XYZ.x = xyY.x * xyY.z / _fmaxf( xyY.y, 1e-10f);
+XYZ.y = xyY.z;
+XYZ.z = (1.0f - xyY.x - xyY.y) * xyY.z / _fmaxf( xyY.y, 1e-10f);
+return XYZ;
+}
+
+__DEVICE__ float rgb_2_hue( float3 rgb) {
+float hue = 0.0f;
+if (rgb.x == rgb.y && rgb.y == rgb.z) {
+hue = 0.0f;
+} else {
+hue = (180.0f/3.1415926535897932f) * _atan2f( _sqrtf(3.0f) * (rgb.y - rgb.z), 2.0f * rgb.x - rgb.y - rgb.z);
+}
+if (hue < 0.0f) hue = hue + 360.0f;
+return hue;
+}
+
+__DEVICE__ float rgb_2_yc( float3 rgb, float ycRadiusWeight) {
+float r = rgb.x;
+float g = rgb.y;
+float b = rgb.z;
+float chroma = _sqrtf(b * (b - g) + g * (g - r) + r * (r - b));
+return ( b + g + r + ycRadiusWeight * chroma) / 3.0f;
+}
+
+__DEVICE__ float Y_2_linCV( float Y, float Ymax, float Ymin) {
+return (Y - Ymin) / (Ymax - Ymin);
+}
+
+__DEVICE__ float linCV_2_Y( float linCV, float Ymax, float Ymin) {
+return linCV * (Ymax - Ymin) + Ymin;
+}
+
+__DEVICE__ float3 Y_2_linCV_f3( float3 Y, float Ymax, float Ymin) {
+float3 linCV;
+linCV.x = Y_2_linCV( Y.x, Ymax, Ymin); linCV.y = Y_2_linCV( Y.y, Ymax, Ymin); linCV.z = Y_2_linCV( Y.z, Ymax, Ymin);
+return linCV;
+}
+
+__DEVICE__ float3 linCV_2_Y_f3( float3 linCV, float Ymax, float Ymin) {
+float3 Y;
+Y.x = linCV_2_Y( linCV.x, Ymax, Ymin); Y.y = linCV_2_Y( linCV.y, Ymax, Ymin); Y.z = linCV_2_Y( linCV.z, Ymax, Ymin);
+return Y;
+}
+
+__DEVICE__ mat3 RGBtoXYZ( Chromaticities N) {
+mat3 M = make_mat3(make_float3(N.red.x, N.red.y, 1.0f - (N.red.x + N.red.y)),
+make_float3(N.green.x, N.green.y, 1.0f - (N.green.x + N.green.y)), make_float3(N.blue.x, N.blue.y, 1.0f - (N.blue.x + N.blue.y)));
+float3 wh = make_float3(N.white.x / N.white.y, 1.0f, (1.0f - (N.white.x + N.white.y)) / N.white.y);
+wh = mult_f3_f33(wh, invert_f33(M));
+mat3 WH = make_mat3(make_float3(wh.x, 0.0f, 0.0f), make_float3(0.0f, wh.y, 0.0f), make_float3(0.0f, 0.0f, wh.z));
+M = mult_f33_f33(WH, M);
+return M;
+}
+
+__DEVICE__ mat3 XYZtoRGB( Chromaticities N) {
+mat3 M = invert_f33(RGBtoXYZ(N));
+return M;
+}
+
+__DEVICE__ mat3 calculate_cat_matrix( float2 src_xy, float2 des_xy) {
+mat3 coneRespMat = CONE_RESP_MATRADFORD;
+const float3 src_xyY = { src_xy.x, src_xy.y, 1.0f };
+const float3 des_xyY = { des_xy.x, des_xy.y, 1.0f };
+float3 src_XYZ = xyY_2_XYZ( src_xyY );
+float3 des_XYZ = xyY_2_XYZ( des_xyY );
+float3 src_coneResp = mult_f3_f33( src_XYZ, coneRespMat);
+float3 des_coneResp = mult_f3_f33( des_XYZ, coneRespMat);
+mat3 vkMat = {
+{ des_coneResp.x / src_coneResp.x, 0.0f, 0.0f },
+{ 0.0f, des_coneResp.y / src_coneResp.y, 0.0f },
+{ 0.0f, 0.0f, des_coneResp.z / src_coneResp.z }
+};
+mat3 cat_matrix = mult_f33_f33( coneRespMat, mult_f33_f33( vkMat, invert_f33( coneRespMat ) ) );
+return cat_matrix;
+}
+
+__DEVICE__ mat3 calc_sat_adjust_matrix( float sat, float3 rgb2Y) {
+float M[3][3];
+M[0][0] = (1.0f - sat) * rgb2Y.x + sat; M[1][0] = (1.0f - sat) * rgb2Y.x; M[2][0] = (1.0f - sat) * rgb2Y.x;
+M[0][1] = (1.0f - sat) * rgb2Y.y; M[1][1] = (1.0f - sat) * rgb2Y.y + sat; M[2][1] = (1.0f - sat) * rgb2Y.y;
+M[0][2] = (1.0f - sat) * rgb2Y.z; M[1][2] = (1.0f - sat) * rgb2Y.z; M[2][2] = (1.0f - sat) * rgb2Y.z + sat;
+mat3 R = make_mat3(make_float3(M[0][0], M[0][1], M[0][2]), 
+make_float3(M[1][0], M[1][1], M[1][2]), make_float3(M[2][0], M[2][1], M[2][2]));
+R = transpose_f33(R);
+return R;
+}
+
+__DEVICE__ float roll_white_fwd( float in, float new_wht, float width) {
+const float x0 = -1.0f;
+const float x1 = x0 + width;
+const float y0 = -new_wht;
+const float y1 = x1;
+const float m1 = (x1 - x0);
+const float a = y0 - y1 + m1;
+const float b = 2.0f * ( y1 - y0) - m1;
+const float c = y0;
+const float t = (-in - x0) / (x1 - x0);
+float out = 0.0f;
+if ( t < 0.0f)
+out = -(t * b + c);
+else if ( t > 1.0f)
+out = in;
+else
+out = -(( t * a + b) * t + c);
+return out;
+}
+
+__DEVICE__ float lookup_ACESmin( float minLum ) {
+float2 minTable[2] = { { _log10f(MIN_LUM_RRT), MIN_STOP_RRT }, { _log10f(MIN_LUM_SDR), MIN_STOP_SDR } };
+return 0.18f * _exp2f(interpolate1D( minTable, 2, _log10f( minLum)));
+}
+
+__DEVICE__ float lookup_ACESmax( float maxLum ) {
+float2 maxTable[2] = { { _log10f(MAX_LUM_SDR), MAX_STOP_SDR }, { _log10f(MAX_LUM_RRT), MAX_STOP_RRT } };
+return 0.18f * _exp2f(interpolate1D( maxTable, 2, _log10f( maxLum)));
+}
+
+__DEVICE__ float5 init_coefsLow( TsPoint TsPointLow, TsPoint TsPointMid) {
+float5 coefsLow;
+float knotIncLow = (_log10f(TsPointMid.x) - _log10f(TsPointLow.x)) / 3.0f;
+coefsLow.x = (TsPointLow.slope * (_log10f(TsPointLow.x) - 0.5f * knotIncLow)) + ( _log10f(TsPointLow.y) - TsPointLow.slope * _log10f(TsPointLow.x));
+coefsLow.y = (TsPointLow.slope * (_log10f(TsPointLow.x) + 0.5f * knotIncLow)) + ( _log10f(TsPointLow.y) - TsPointLow.slope * _log10f(TsPointLow.x));
+coefsLow.w = (TsPointMid.slope * (_log10f(TsPointMid.x) - 0.5f * knotIncLow)) + ( _log10f(TsPointMid.y) - TsPointMid.slope * _log10f(TsPointMid.x));
+coefsLow.m = (TsPointMid.slope * (_log10f(TsPointMid.x) + 0.5f * knotIncLow)) + ( _log10f(TsPointMid.y) - TsPointMid.slope * _log10f(TsPointMid.x));
+float2 bendsLow[2] = { {MIN_STOP_RRT, 0.18f}, {MIN_STOP_SDR, 0.35f} };
+float pctLow = interpolate1D( bendsLow, 2, log2(TsPointLow.x / 0.18f));
+coefsLow.z = _log10f(TsPointLow.y) + pctLow*(_log10f(TsPointMid.y) - _log10f(TsPointLow.y));
+return coefsLow;
+}
+
+__DEVICE__ float5 init_coefsHigh( TsPoint TsPointMid, TsPoint TsPointMax) {
+float5 coefsHigh;
+float knotIncHigh = (_log10f(TsPointMax.x) - _log10f(TsPointMid.x)) / 3.0f;
+coefsHigh.x = (TsPointMid.slope * (_log10f(TsPointMid.x) - 0.5f * knotIncHigh)) + ( _log10f(TsPointMid.y) - TsPointMid.slope * _log10f(TsPointMid.x));
+coefsHigh.y = (TsPointMid.slope * (_log10f(TsPointMid.x) + 0.5f * knotIncHigh)) + ( _log10f(TsPointMid.y) - TsPointMid.slope * _log10f(TsPointMid.x));
+coefsHigh.w = (TsPointMax.slope * (_log10f(TsPointMax.x) - 0.5f * knotIncHigh)) + ( _log10f(TsPointMax.y) - TsPointMax.slope * _log10f(TsPointMax.x));
+coefsHigh.m = (TsPointMax.slope * (_log10f(TsPointMax.x) + 0.5f * knotIncHigh)) + ( _log10f(TsPointMax.y) - TsPointMax.slope * _log10f(TsPointMax.x));
+float2 bendsHigh[2] = { {MAX_STOP_SDR, 0.89f}, {MAX_STOP_RRT, 0.90f} };
+float pctHigh = interpolate1D( bendsHigh, 2, log2(TsPointMax.x / 0.18f));
+coefsHigh.z = _log10f(TsPointMid.y) + pctHigh*(_log10f(TsPointMax.y) - _log10f(TsPointMid.y));
+return coefsHigh;
+}
+
+__DEVICE__ float shift( float in, float expShift) {
+return _exp2f((_log2f(in) - expShift));
+}
+
+__DEVICE__ TsParams init_TsParams( float minLum, float maxLum, float expShift) {
+TsPoint MIN_PT = { lookup_ACESmin(minLum), minLum, 0.0f};
+TsPoint MID_PT = { 0.18f, 4.8f, 1.55f};
+TsPoint MAX_PT = { lookup_ACESmax(maxLum), maxLum, 0.0f};
+float5 cLow;
+cLow = init_coefsLow( MIN_PT, MID_PT);
+float5 cHigh;
+cHigh = init_coefsHigh( MID_PT, MAX_PT);
+MIN_PT.x = shift(lookup_ACESmin(minLum),expShift);
+MID_PT.x = shift(0.18f, expShift);
+MAX_PT.x = shift(lookup_ACESmax(maxLum),expShift);
+TsParams P = { {MIN_PT.x, MIN_PT.y, MIN_PT.slope}, {MID_PT.x, MID_PT.y, MID_PT.slope},
+{MAX_PT.x, MAX_PT.y, MAX_PT.slope}, {cLow.x, cLow.y, cLow.z, cLow.w, cLow.m, cLow.m},
+{cHigh.x, cHigh.y, cHigh.z, cHigh.w, cHigh.m, cHigh.m} };
+return P;
+}
+
+__DEVICE__ float ssts( float x, TsParams C) {
+const int N_KNOTS_LOW = 4;
+const int N_KNOTS_HIGH = 4;
+float logx = _log10f( _fmaxf(x, 1e-10f));
+float logy = 0.0f;
+if ( logx <= _log10f(C.Min.x) ) {
+logy = logx * C.Min.slope + ( _log10f(C.Min.y) - C.Min.slope * _log10f(C.Min.x) );
+} else if (( logx > _log10f(C.Min.x) ) && ( logx < _log10f(C.Mid.x) )) {
+float knot_coord = (N_KNOTS_LOW - 1) * (logx - _log10f(C.Min.x)) / (_log10f(C.Mid.x) - _log10f(C.Min.x));
+int j = knot_coord;
+float t = knot_coord - j;
+float3 cf = { C.coefsLow[ j], C.coefsLow[ j + 1], C.coefsLow[ j + 2]};
+float3 monomials = { t * t, t, 1.0f };
+logy = dot_f3_f3( monomials, mult_f3_f33( cf, M1));
+} else if (( logx >= _log10f(C.Mid.x) ) && ( logx < _log10f(C.Max.x) )) {
+float knot_coord = (N_KNOTS_HIGH - 1) * (logx - _log10f(C.Mid.x)) / (_log10f(C.Max.x) - _log10f(C.Mid.x));
+int j = knot_coord;
+float t = knot_coord - j;
+float3 cf = { C.coefsHigh[ j], C.coefsHigh[ j + 1], C.coefsHigh[ j + 2]};
+float3 monomials = { t * t, t, 1.0f };
+logy = dot_f3_f3( monomials, mult_f3_f33( cf, M1));
+} else {
+logy = logx * C.Max.slope + ( _log10f(C.Max.y) - C.Max.slope * _log10f(C.Max.x) );
+}
+return _exp10f(logy);
+}
+
+__DEVICE__ float3 ssts_f3( float3 x, TsParams C) {
+float3 out;
+out.x = ssts( x.x, C); out.y = ssts( x.y, C); out.z = ssts( x.z, C);
+return out;
+}
+
+__DEVICE__ float glow_fwd( float ycIn, float glowGainIn, float glowMid) {
+float glowGainOut;
+if (ycIn <= 2.0f/3.0f * glowMid) {
+glowGainOut = glowGainIn;
+} else if ( ycIn >= 2.0f * glowMid) {
+glowGainOut = 0.0f;
+} else {
+glowGainOut = glowGainIn * (glowMid / ycIn - 1.0f/2.0f);
+}
+return glowGainOut;
+}
+
+__DEVICE__ float inv_ssts( float y, TsParams C) {
+const int N_KNOTS_LOW = 4;
+const int N_KNOTS_HIGH = 4;
+const float KNOT_INC_LOW = (_log10f(C.Mid.x) - _log10f(C.Min.x)) / (N_KNOTS_LOW - 1.0f);
+const float KNOT_INC_HIGH = (_log10f(C.Max.x) - _log10f(C.Mid.x)) / (N_KNOTS_HIGH - 1.0f);
+float KNOT_Y_LOW[ N_KNOTS_LOW];
+for (int i = 0; i < N_KNOTS_LOW; i = i + 1) {
+KNOT_Y_LOW[ i] = ( C.coefsLow[i] + C.coefsLow[i + 1]) / 2.0f;
+};
+float KNOT_Y_HIGH[ N_KNOTS_HIGH];
+for (int i = 0; i < N_KNOTS_HIGH; i = i + 1) {
+KNOT_Y_HIGH[ i] = ( C.coefsHigh[i] + C.coefsHigh[i + 1]) / 2.0f;
+};
+float logy = _log10f( _fmaxf(y, 1e-10f));
+float logx;
+if (logy <= _log10f(C.Min.y)) {
+logx = _log10f(C.Min.x);
+} else if ( (logy > _log10f(C.Min.y)) && (logy <= _log10f(C.Mid.y)) ) {
+unsigned int j = 0;
+float3 cf = make_float3(0.0f, 0.0f, 0.0f);
+if ( logy > KNOT_Y_LOW[ 0] && logy <= KNOT_Y_LOW[ 1]) {
+cf.x = C.coefsLow[0]; cf.y = C.coefsLow[1]; cf.z = C.coefsLow[2]; j = 0;
+} else if ( logy > KNOT_Y_LOW[ 1] && logy <= KNOT_Y_LOW[ 2]) {
+cf.x = C.coefsLow[1]; cf.y = C.coefsLow[2]; cf.z = C.coefsLow[3]; j = 1;
+} else if ( logy > KNOT_Y_LOW[ 2] && logy <= KNOT_Y_LOW[ 3]) {
+cf.x = C.coefsLow[2]; cf.y = C.coefsLow[3]; cf.z = C.coefsLow[4]; j = 2;
+}
+const float3 tmp = mult_f3_f33( cf, M1);
+float a = tmp.x; float b = tmp.y; float c = tmp.z;
+c = c - logy;
+const float d = _sqrtf( b * b - 4.0f * a * c);
+const float t = ( 2.0f * c) / ( -d - b);
+logx = _log10f(C.Min.x) + ( t + j) * KNOT_INC_LOW;
+} else if ( (logy > _log10f(C.Mid.y)) && (logy < _log10f(C.Max.y)) ) {
+unsigned int j = 0;
+float3 cf = make_float3(0.0f, 0.0f, 0.0f);
+if ( logy >= KNOT_Y_HIGH[ 0] && logy <= KNOT_Y_HIGH[ 1]) {
+cf.x = C.coefsHigh[0]; cf.y = C.coefsHigh[1]; cf.z = C.coefsHigh[2]; j = 0;
+} else if ( logy > KNOT_Y_HIGH[ 1] && logy <= KNOT_Y_HIGH[ 2]) {
+cf.x = C.coefsHigh[1]; cf.y = C.coefsHigh[2]; cf.z = C.coefsHigh[3]; j = 1;
+} else if ( logy > KNOT_Y_HIGH[ 2] && logy <= KNOT_Y_HIGH[ 3]) {
+cf.x = C.coefsHigh[2]; cf.y = C.coefsHigh[3]; cf.z = C.coefsHigh[4]; j = 2;
+}
+const float3 tmp = mult_f3_f33( cf, M1);
+float a = tmp.x; float b = tmp.y; float c = tmp.z;
+c = c - logy;
+const float d = _sqrtf( b * b - 4.0f * a * c);
+const float t = ( 2.0f * c) / ( -d - b);
+logx = _log10f(C.Mid.x) + ( t + j) * KNOT_INC_HIGH;
+} else {
+logx = _log10f(C.Max.x);
+}
+return _exp10f( logx);
+}
+
+__DEVICE__ float glow_inv( float ycOut, float glowGainIn, float glowMid) {
+float glowGainOut;
+if (ycOut <= ((1.0f + glowGainIn) * 2.0f/3.0f * glowMid)) {
+glowGainOut = -glowGainIn / (1.0f + glowGainIn);
+} else if ( ycOut >= (2.0f * glowMid)) {
+glowGainOut = 0.0f;
+} else {
+glowGainOut = glowGainIn * (glowMid / ycOut - 1.0f/2.0f) / (glowGainIn / 2.0f - 1.0f);
+}
+return glowGainOut;
+}
+
+__DEVICE__ float sigmoid_shaper( float x) {
+float t = _fmaxf( 1.0f - _fabs( x / 2.0f), 0.0f);
+float y = 1.0f + _sign(x) * (1.0f - t * t);
+return y / 2.0f;
+}
+
+__DEVICE__ float cubic_basis_shaper ( float x, float w) {
+float M[4][4] = { {-1.0f/6.0f, 3.0f/6.0f,-3.0f/6.0f, 1.0f/6.0f}, {3.0f/6.0f, -6.0f/6.0f, 3.0f/6.0f, 0.0f/6.0f},
+{-3.0f/6.0f, 0.0f/6.0f, 3.0f/6.0f, 0.0f/6.0f}, {1.0f/6.0f, 4.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f} };
+float knots[5] = { -w/2.0f, -w/4.0f, 0.0f, w/4.0f, w/2.0f };
+float y = 0.0f;
+if ((x > knots[0]) && (x < knots[4])) {
+float knot_coord = (x - knots[0]) * 4.0f/w;
+int j = knot_coord;
+float t = knot_coord - j;
+float monomials[4] = { t*t*t, t*t, t, 1.0f };
+if ( j == 3) {
+y = monomials[0] * M[0][0] + monomials[1] * M[1][0] +
+monomials[2] * M[2][0] + monomials[3] * M[3][0];
+} else if ( j == 2) {
+y = monomials[0] * M[0][1] + monomials[1] * M[1][1] +
+monomials[2] * M[2][1] + monomials[3] * M[3][1];
+} else if ( j == 1) {
+y = monomials[0] * M[0][2] + monomials[1] * M[1][2] +
+monomials[2] * M[2][2] + monomials[3] * M[3][2];
+} else if ( j == 0) {
+y = monomials[0] * M[0][3] + monomials[1] * M[1][3] +
+monomials[2] * M[2][3] + monomials[3] * M[3][3];
+} else {
+y = 0.0f;}}
+return y * 3.0f/2.0f;
+}
+
+__DEVICE__ float center_hue( float hue, float centerH) {
+float hueCentered = hue - centerH;
+if (hueCentered < -180.0f) hueCentered = hueCentered + 360.0f;
+else if (hueCentered > 180.0f) hueCentered = hueCentered - 360.0f;
+return hueCentered;
+}
+
+__DEVICE__ float3 rrt_sweeteners( float3 in) {
+float3 aces = in;
+float saturation = rgb_2_saturation( aces);
+float ycIn = rgb_2_yc(aces, 1.75f);
+float s = sigmoid_shaper( (saturation - 0.4f) / 0.2f);
+float addedGlow = 1.0f + glow_fwd( ycIn, RRT_GLOW_GAIN * s, RRT_GLOW_MID);
+aces = mult_f_f3( addedGlow, aces);
+float hue = rgb_2_hue( aces);
+float centeredHue = center_hue( hue, RRT_RED_HUE);
+float hueWeight = cubic_basis_shaper( centeredHue, RRT_RED_WIDTH);
+aces.x = aces.x + hueWeight * saturation * (RRT_RED_PIVOT - aces.x) * (1.0f - RRT_RED_SCALE);
+aces = max_f3_f( aces, 0.0f);
+float3 rgbPre = mult_f3_f33( aces, mult_f33_f33( RGBtoXYZ( AP0), XYZtoRGB( AP1)));
+rgbPre = max_f3_f( rgbPre, 0.0f);
+rgbPre = mult_f3_f33( rgbPre, calc_sat_adjust_matrix( RRT_SAT_FACTOR, make_float3(RGBtoXYZ( AP1).c0.y, RGBtoXYZ( AP1).c1.y, RGBtoXYZ( AP1).c2.y)));
+return rgbPre;
+}
+
+__DEVICE__ float3 limit_to_primaries( float3 XYZ, Chromaticities LIMITING_PRI) {
+mat3 XYZ_2_LIMITING_PRI_MAT = XYZtoRGB( LIMITING_PRI);
+mat3 LIMITING_PRI_2_XYZ_MAT = RGBtoXYZ( LIMITING_PRI);
+float3 rgb = mult_f3_f33( XYZ, XYZ_2_LIMITING_PRI_MAT);
+float3 limitedRgb = clamp_f3( rgb, 0.0f, 1.0f);
+return mult_f3_f33( limitedRgb, LIMITING_PRI_2_XYZ_MAT);
+}
+
+__DEVICE__ float3 dark_to_dim( float3 XYZ) {
+float3 xyY = XYZ_2_xyY(XYZ);
+xyY.z = _fmaxf( xyY.z, 0.0f);
+xyY.z = _powf( xyY.z, DIM_SURROUND_GAMMA);
+return xyY_2_XYZ(xyY);
+}
+
+__DEVICE__ float3 dim_to_dark( float3 XYZ) {
+float3 xyY = XYZ_2_xyY(XYZ);
+xyY.z = _fmaxf( xyY.z, 0.0f);
+xyY.z = _powf( xyY.z, 1.0f / DIM_SURROUND_GAMMA);
+return xyY_2_XYZ(xyY);
+}
+
+__DEVICE__ float3 adx_convertToLinear( float3 aces) {
+aces.x = aces.x < 0.0f ? 0.04911331f * aces.x + 0.001301270f : 
+aces.x < 0.01f ? _expf(37.74261f * aces.x - 6.644415f) : 
+aces.x < 0.6f ? _expf(-6.685996f + 2.302585f * _powf(6.569476f * aces.x - 0.03258072f, 0.5f)) : 
+_expf(_fminf(4.1865183f * aces.x - 4.645361f, 86.4f));
+aces.y = aces.y < 0.0f ? 0.04911331f * aces.y + 0.001301270f : 
+aces.y < 0.01f ? _expf(37.74261f * aces.y - 6.644415f) : 
+aces.y < 0.6f ? _expf(-6.685996f + 2.302585f * _powf(6.569476f * aces.y - 0.03258072f, 0.5f)) : 
+_expf(_fminf(4.1865183f * aces.y - 4.645361f, 86.4f));
+aces.z = aces.z < 0.0f ? 0.04911331f * aces.z + 0.001301270f : 
+aces.z < 0.01f ? _expf(37.74261f * aces.z - 6.644415f) : 
+aces.z < 0.6f ? _expf(-6.685996f + 2.302585f * _powf(6.569476f * aces.z - 0.03258072f, 0.5f)) : 
+_expf(_fminf(4.1865183f * aces.z - 4.645361f, 86.4f));
+return aces;
+}
+
+__DEVICE__ float3 ADX_to_ACES( float3 aces) {
+aces.x = aces.x * 2.048f - 0.19f;
+aces.y = aces.y * 2.048f - 0.19f;
+aces.z = aces.z * 2.048f - 0.19f;
+aces = mult_f3_f33(aces, CDD_TO_CID);
+aces = adx_convertToLinear(aces);
+aces = mult_f3_f33(aces, EXP_TO_ACES);
+return aces;
+}
+
+__DEVICE__ float ST2084_2_Y( float N ) {
+float Np = _powf( N, 1.0f / pq_m2 );
+float L = Np - pq_c1;
+if ( L < 0.0f )
+L = 0.0f;
+L = L / ( pq_c2 - pq_c3 * Np );
+L = _powf( L, 1.0f / pq_m1 );
+return L * pq_C;
+}
+
+__DEVICE__ float3 ST2084_2_Y_f3( float3 in) {
+float3 out;
+out.x = ST2084_2_Y( in.x); 
+out.y = ST2084_2_Y( in.y); 
+out.z = ST2084_2_Y( in.z);
+return out;
+}
+
+__DEVICE__ float3 ST2084_2_HLG_1000nits_f3( float3 PQ) {
+float3 displayLinear = ST2084_2_Y_f3( PQ);
+float Y_d = 0.2627f * displayLinear.x + 0.6780f * displayLinear.y + 0.0593f * displayLinear.z;
+const float L_w = 1000.0f;
+const float L_b = 0.0f;
+const float alpha = (L_w - L_b);
+const float beta = L_b;
+const float gamma = 1.2f;
+float3 sceneLinear;
+if (Y_d == 0.0f) {
+sceneLinear.x = 0.0f; sceneLinear.y = 0.0f; sceneLinear.z = 0.0f;
+} else {
+sceneLinear.x = _powf( (Y_d - beta) / alpha, (1.0f - gamma) / gamma) * ((displayLinear.x - beta) / alpha);
+sceneLinear.y = _powf( (Y_d - beta) / alpha, (1.0f - gamma) / gamma) * ((displayLinear.y - beta) / alpha);
+sceneLinear.z = _powf( (Y_d - beta) / alpha, (1.0f - gamma) / gamma) * ((displayLinear.z - beta) / alpha);
+}
+const float a = 0.17883277f;
+const float b = 0.28466892f;
+const float c = 0.55991073f;
+float3 HLG;
+if (sceneLinear.x <= 1.0f / 12.0f) {
+HLG.x = _sqrtf(3.0f * sceneLinear.x);
+} else {
+HLG.x = a * _logf(12.0f * sceneLinear.x-b)+c;
+}
+if (sceneLinear.y <= 1.0f / 12.0f) {
+HLG.y = _sqrtf(3.0f * sceneLinear.y);
+} else {
+HLG.y = a * _logf(12.0f * sceneLinear.y-b)+c;
+}
+if (sceneLinear.z <= 1.0f / 12.0f) {
+HLG.z = _sqrtf(3.0f * sceneLinear.z);
+} else {
+HLG.z = a * _logf(12.0f * sceneLinear.z - b) + c;
+}
+return HLG;
+}
+
+__DEVICE__ float fullRange_to_smpteRange( float in) {
+const float REFBLACK = ( 64.0f / 1023.0f);
+const float REFWHITE = ( 940.0f / 1023.0f);
+return ( in * ( REFWHITE - REFBLACK) + REFBLACK );
+}
+
+__DEVICE__ float3 fullRange_to_smpteRange_f3( float3 rgbIn) {
+float3 rgbOut;
+rgbOut.x = fullRange_to_smpteRange( rgbIn.x); 
+rgbOut.y = fullRange_to_smpteRange( rgbIn.y); 
+rgbOut.z = fullRange_to_smpteRange( rgbIn.z);
+return rgbOut;
+}
+
+__DEVICE__ float3 outputTransform (
+float3 in,
+float Y_MIN,
+float Y_MID,
+float Y_MAX,
+Chromaticities DISPLAY_PRI,
+Chromaticities LIMITING_PRI,
+int EOTF,
+int SURROUND,
+bool STRETCH_BLACK = true,
+bool D60_SIM = false,
+bool LEGAL_RANGE = false
+)
+{
+mat3 XYZ_2_DISPLAY_PRI_MAT = XYZtoRGB( DISPLAY_PRI);
+TsParams PARAMS_DEFAULT = init_TsParams( Y_MIN, Y_MAX, 0.0f);
+float expShift = _log2f(inv_ssts(Y_MID, PARAMS_DEFAULT)) - _log2f(0.18f);
+TsParams PARAMS = init_TsParams( Y_MIN, Y_MAX, expShift);
+float3 rgbPre = rrt_sweeteners( in);
+float3 rgbPost = ssts_f3( rgbPre, PARAMS);
+float3 linearCV = Y_2_linCV_f3( rgbPost, Y_MAX, Y_MIN);
+float3 XYZ = mult_f3_f33( linearCV, RGBtoXYZ( AP1));
+if (SURROUND == 0) {
+} else if (SURROUND == 1) {
+if ((EOTF == 1) || (EOTF == 2) || (EOTF == 3)) {
+XYZ = dark_to_dim( XYZ);
+}} else if (SURROUND == 2) {
+}
+XYZ = limit_to_primaries( XYZ, LIMITING_PRI);
+if (D60_SIM == false) {
+if ((DISPLAY_PRI.white.x != AP0.white.x) && (DISPLAY_PRI.white.y != AP0.white.y)) {
+XYZ = mult_f3_f33( XYZ, calculate_cat_matrix( AP0.white, REC709_PRI.white));
+}}
+linearCV = mult_f3_f33( XYZ, XYZ_2_DISPLAY_PRI_MAT);
+if (D60_SIM == true) {
+float SCALE = 1.0f;
+if ((DISPLAY_PRI.white.x == 0.3127f) && (DISPLAY_PRI.white.y == 0.329f)) {
+SCALE = 0.96362f;
+}
+else if ((DISPLAY_PRI.white.x == 0.314f) && (DISPLAY_PRI.white.y == 0.351f)) {
+linearCV.x = roll_white_fwd( linearCV.x, 0.918f, 0.5f);
+linearCV.y = roll_white_fwd( linearCV.y, 0.918f, 0.5f);
+linearCV.z = roll_white_fwd( linearCV.z, 0.918f, 0.5f);
+SCALE = 0.96f;
+}
+linearCV = mult_f_f3( SCALE, linearCV);
+}
+linearCV = max_f3_f( linearCV, 0.0f);
+float3 outputCV;
+if (EOTF == 0) {
+if (STRETCH_BLACK == true) {
+outputCV = Y_2_ST2084_f3( max_f3_f( linCV_2_Y_f3(linearCV, Y_MAX, 0.0f), 0.0f) );
+} else {
+outputCV = Y_2_ST2084_f3( linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN) );
+}} else if (EOTF == 1) {
+outputCV = bt1886_r_f3( linearCV, 2.4f, 1.0f, 0.0f);
+} else if (EOTF == 2) {
+outputCV = moncurve_r_f3( linearCV, 2.4f, 0.055f);
+} else if (EOTF == 3) {
+outputCV = pow_f3( linearCV, 1.0f/2.6f);
+} else if (EOTF == 4) {
+outputCV = linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN);
+} else if (EOTF == 5) {
+if (STRETCH_BLACK == true) {
+outputCV = Y_2_ST2084_f3( max_f3_f( linCV_2_Y_f3(linearCV, Y_MAX, 0.0f), 0.0f) );
+} else {
+outputCV = Y_2_ST2084_f3( linCV_2_Y_f3(linearCV, Y_MAX, Y_MIN) );
+}
+outputCV = ST2084_2_HLG_1000nits_f3( outputCV);
+}
+if (LEGAL_RANGE == true) {
+outputCV = fullRange_to_smpteRange_f3( outputCV);
+}
+return outputCV;
+}
+
+__DEVICE__ float3 RRTODT_Rec709_100nits_10nits_BT1886( float3 aces) {
+float Y_MIN = 0.0001f;
+float Y_MID = 10.0f;
+float Y_MAX = 100.0f;
+Chromaticities DISPLAY_PRI = REC709_PRI;
+Chromaticities LIMITING_PRI = REC709_PRI;
+int EOTF = 1;
+int SURROUND = 1;
+bool STRETCH_BLACK = false;
+bool D60_SIM = false;
+bool LEGAL_RANGE = false;
+float3 cv = outputTransform( aces, Y_MIN, Y_MID, Y_MAX, DISPLAY_PRI,
+LIMITING_PRI, EOTF, SURROUND, STRETCH_BLACK, D60_SIM, LEGAL_RANGE );
+return cv;
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+
+aces = ADX_to_ACES(aces);
+
+if (Exposure != 0.0f) { 
+aces.x *= _exp2f(Exposure); 
+aces.y *= _exp2f(Exposure); 
+aces.z *= _exp2f(Exposure); 
+}
+
+aces = RRTODT_Rec709_100nits_10nits_BT1886(aces);
+
+return aces;
+}

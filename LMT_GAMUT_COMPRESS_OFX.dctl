@@ -1,0 +1,125 @@
+// LMT Gamut Compress OFX DCTL
+
+// Input is ACEScct
+// Output is ACEScct
+
+DEFINE_UI_PARAMS(LIM_CYAN, Cyan Limit, DCTLUI_SLIDER_FLOAT, 1.147, 1.001, 2, 0.001)
+DEFINE_UI_PARAMS(THR_CYAN, Cyan Threshold, DCTLUI_SLIDER_FLOAT, 0.815, 0.5, 2, 0.001)
+DEFINE_UI_PARAMS(LIM_MAGENTA, Magenta Limit, DCTLUI_SLIDER_FLOAT, 1.264, 1.001, 2, 0.001)
+DEFINE_UI_PARAMS(THR_MAGENTA, Magenta Threshold, DCTLUI_SLIDER_FLOAT, 0.803, 0.5, 2, 0.001)
+DEFINE_UI_PARAMS(LIM_YELLOW, Yellow Limit, DCTLUI_SLIDER_FLOAT, 1.312, 1.001, 2, 0.001)
+DEFINE_UI_PARAMS(THR_YELLOW, Yellow Threshold, DCTLUI_SLIDER_FLOAT, 0.880, 0.5, 2, 0.001)
+DEFINE_UI_PARAMS(PWR, Power, DCTLUI_SLIDER_FLOAT, 1.2, 0.1, 2, 0.001)
+DEFINE_UI_PARAMS(INVERT, Invert, DCTLUI_CHECK_BOX, 0)
+
+typedef struct {
+float3 c0, c1, c2;
+} mat3;
+
+__CONSTANT__ mat3 AP0_2_AP1_MAT = 
+{ {1.4514393161f, -0.0765537734f, 0.0083161484f}, {-0.2365107469f, 1.1762296998f, -0.0060324498f}, {-0.2149285693f, -0.0996759264f, 0.9977163014f} };
+__CONSTANT__ mat3 AP1_2_AP0_MAT = 
+{ {0.6954522414f, 0.0447945634f, -0.0055258826f}, {0.1406786965f, 0.8596711185f, 0.0040252103f}, {0.1638690622f, 0.0955343182f, 1.0015006723f} };
+__CONSTANT__ float X_BRK = 0.0078125f;
+__CONSTANT__ float Y_BRK = 0.155251141552511f;
+__CONSTANT__ float A = 10.5402377416545f;
+__CONSTANT__ float B = 0.0729055341958355f;
+
+__DEVICE__ float max_f3( float3 a) {
+return _fmaxf( a.x, _fmaxf( a.y, a.z));
+}
+
+__DEVICE__ float3 mult_f3_f33( float3 X, mat3 A) {
+float r[3];
+float x[3] = {X.x, X.y, X.z};
+float a[3][3] = {{A.c0.x, A.c0.y, A.c0.z}, {A.c1.x, A.c1.y, A.c1.z}, {A.c2.x, A.c2.y, A.c2.z}};
+for( int i = 0; i < 3; ++i){
+r[i] = 0.0f;
+for( int j = 0; j < 3; ++j){
+r[i] = r[i] + x[j] * a[j][i];}}
+return make_float3(r[0], r[1], r[2]);
+}
+
+__DEVICE__ float lin_to_ACEScct( float in) {
+if (in <= X_BRK)
+return A * in + B;
+else
+return (_log2f(in) + 9.72f) / 17.52f;
+}
+
+__DEVICE__ float ACEScct_to_lin( float in) {
+if (in > Y_BRK)
+return _exp2f(in * 17.52f - 9.72f);
+else
+return (in - B) / A;
+}
+
+__DEVICE__ float3 ACES_to_ACEScct( float3 in) {
+float3 ap1_lin = mult_f3_f33(in, AP0_2_AP1_MAT);
+float3 acescct;
+acescct.x = lin_to_ACEScct(ap1_lin.x); acescct.y = lin_to_ACEScct(ap1_lin.y); acescct.z = lin_to_ACEScct(ap1_lin.z);
+return acescct;
+}
+
+__DEVICE__ float3 ACEScct_to_ACES( float3 in) {
+float3 ap1_lin;
+ap1_lin.x = ACEScct_to_lin(in.x); ap1_lin.y = ACEScct_to_lin(in.y); ap1_lin.z = ACEScct_to_lin(in.z);
+return mult_f3_f33(ap1_lin, AP1_2_AP0_MAT);
+}
+
+
+__DEVICE__ float compress( float dist, float lim, float thr, float pwr, bool invrt) {
+float comprDist;
+float scl;
+float nd;
+float p;
+if (dist < thr) {
+comprDist = dist;
+} else {
+scl = (lim - thr) / _powf(_powf((1.0f - thr) / (lim - thr), -pwr) - 1.0f, 1.0f / pwr);
+nd = (dist - thr) / scl;
+p = _powf(nd, pwr);
+if (!invrt) {
+comprDist = thr + scl * nd / (_powf(1.0f + p, 1.0f / pwr));
+} else {
+if (dist > (thr + scl)) {
+comprDist = dist;
+} else {
+comprDist = thr + scl * _powf(-(p / (p - 1.0f)), 1.0f / pwr);
+}}}
+return comprDist;
+}
+
+__DEVICE__ float3 gamut_compress( float3 aces, float LIMCYAN, float LIMYELLOW, float LIMMAGENTA, 
+float THRCYAN, float THRYELLOW, float THRMAGENTA, float POWER, bool invrt) {
+float3 linAP1 = mult_f3_f33(aces, AP0_2_AP1_MAT);
+float ach = max_f3(linAP1);
+float3 dist;
+if (ach == 0.0f) {
+dist = make_float3(0.0f, 0.0f, 0.0f);
+} else {
+dist.x = (ach - linAP1.x) / _fabs(ach);
+dist.y = (ach - linAP1.y) / _fabs(ach);
+dist.z = (ach - linAP1.z) / _fabs(ach);
+}
+float3 comprDist;
+comprDist.x = compress(dist.x, LIMCYAN, THRCYAN, POWER, invrt);
+comprDist.y = compress(dist.y, LIMMAGENTA, THRMAGENTA, POWER, invrt);
+comprDist.z = compress(dist.z, LIMYELLOW, THRYELLOW, POWER, invrt);
+float3 comprLinAP1;
+comprLinAP1.x = ach - comprDist.x * _fabs(ach);
+comprLinAP1.y = ach - comprDist.y * _fabs(ach);
+comprLinAP1.z = ach - comprDist.z * _fabs(ach);
+aces = mult_f3_f33(comprLinAP1, AP1_2_AP0_MAT);
+return aces;
+}
+
+__DEVICE__ float3 transform(int p_Width, int p_Height, int p_X, int p_Y, float p_R, float p_G, float p_B)
+{
+float3 aces = make_float3(p_R, p_G, p_B);
+aces = ACEScct_to_ACES(aces);
+aces = gamut_compress(aces, LIM_CYAN, LIM_YELLOW, LIM_MAGENTA, 
+THR_CYAN, THR_YELLOW, THR_MAGENTA, PWR, INVERT);
+aces = ACES_to_ACEScct(aces);
+return aces;
+}

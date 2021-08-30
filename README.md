@@ -1,5 +1,5 @@
 # ACES_DCTL
 
-ACES v1.2 DCTLs  (DaVinci Resolve Studio)
+ACES v1.3 DCTLs  (DaVinci Resolve Studio)
 
-Ported from https://github.com/ampas/aces-dev/releases/tag/v1.2_rc1
+Ported from https://github.com/ampas/aces-dev
